@@ -1,4 +1,5 @@
-const API_BASE_URL = "http://localhost:5000/api/mensajes";
+// Cambiamos localhost por tu link real de internet generado en Render
+const API_BASE_URL = "https://conectado.onrender.com/api/mensajes";
 
 const btnEnviar = document.getElementById('btnEnviar');
 const inputAutor = document.getElementById('inputAutor');
