@@ -99,13 +99,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderizarCarrito(nodosInterfazCarrito);
 
     // ==========================================
-    // LÓGICA DE CONTROL DEL PANEL DESPLEGABLE (DRAWER)
+    // LÓGICA DE CONTROL DEL PANEL DESPLEGABLE (DRAWER) - CONGELACIÓN ANTI-SCROLL
     // ==========================================
     const abrirMenuCarrito = () => {
         if (DOM.carritoOverlay) {
             DOM.carritoOverlay.style.opacity = "1";
             DOM.carritoOverlay.style.pointerEvents = "auto";
             DOM.carritoOverlay.firstElementChild.style.transform = "translateX(0)";
+            
+            // 🛑 CONGELAR FONDO: Evita que la tienda se deslice atrás al mover el carrito en móviles
+            document.body.style.overflow = "hidden";
+            document.body.style.touchAction = "none";
         }
     };
 
@@ -114,6 +118,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             DOM.carritoOverlay.style.opacity = "0";
             DOM.carritoOverlay.style.pointerEvents = "none";
             DOM.carritoOverlay.firstElementChild.style.transform = "translateX(100%)";
+            
+            // 🔓 LIBERAR FONDO: Devuelve el scroll normal a la tienda al cerrar la bolsa
+            document.body.style.overflow = "auto";
+            document.body.style.touchAction = "auto";
         }
     };
 
@@ -156,54 +164,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ==========================================
-    // 📍 INYECCIÓN INTEGRAL: ACCIÓN DE GEOLOCALIZACIÓN CON RESPUESTA VISUAL
+    // 📍 CONFIGURACIÓN ESCUCHA DEL BOTÓN GEOLOCALIZACIÓN RECONECTADO
     // ==========================================
     if (DOM.btnUbicacion) {
-        const txtEstado = document.getElementById('txtEstadoUbicacion');
-
-        DOM.btnUbicacion.addEventListener('click', async () => {
-            try {
-                DOM.btnUbicacion.textContent = "📡 Localizando...";
-                DOM.btnUbicacion.disabled = true;
-                DOM.btnUbicacion.style.opacity = "0.7";
-
-                // Llama al hardware del teléfono/PC
-                const miUbicacion = await obtenerUbicacionCliente();
-                
-                // CAMBIO VISUAL INDESTRUCTIBLE (Diseño alineado de Éxito)
-                DOM.btnUbicacion.textContent = "✅ Ubicación Verificada";
-                DOM.btnUbicacion.style.background = "#28a745"; // Verde Urban exitoso
-                DOM.btnUbicacion.style.opacity = "1";
-                
-                if (txtEstado) {
-                    txtEstado.textContent = "✨ Coordenadas GPS sincronizadas con el motorizado.";
-                    txtEstado.style.color = "#28a745";
-                    txtEstado.style.fontWeight = "bold";
-                }
-                
-                // Guardamos las coordenadas en sessionStorage para recuperarlas al armar el texto de WhatsApp
-                sessionStorage.setItem('urban_latitud', miUbicacion.lat);
-                sessionStorage.setItem('urban_longitud', miUbicacion.lng);
-
-                console.log("🚀 Coordenadas listas para enviar al motorizado:", miUbicacion);
-
-                // ====================================================
-                // PROXIMO PASO: Aquí dispararemos el cálculo del costo del Delivery 
-                // cuando tengamos la función del tabulador de zonas de Caracas.
-                // ====================================================
-
-            } catch (error) {
-                DOM.btnUbicacion.textContent = "❌ Reintentar Ubicación";
-                DOM.btnUbicacion.disabled = false;
-                DOM.btnUbicacion.style.background = "#dc3545"; // Rojo de advertencia
-                DOM.btnUbicacion.style.opacity = "1";
-                
-                if (txtEstado) {
-                    txtEstado.textContent = "⚠️ El motorizado necesita que apruebes el permiso GPS.";
-                    txtEstado.style.color = "#dc3545";
-                }
-                alert(`Para garantizar que el motorizado llegue exacto: ${error.message}`);
-            }
+        DOM.btnUbicacion.addEventListener('click', () => {
+            console.log("⚡ Botón GPS presionado en la Bolsa de Compras.");
+            obtenerUbicacionCliente();
         });
     }
+    
 });
