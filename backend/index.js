@@ -19,6 +19,7 @@ app.get('/api/prueba', (req, res) => {
 
 // Vincular las rutas modulares del proyecto
 app.use('/api/mensajes', require('./src/routes/mensaje.routes'));
+app.use('/api/pedidos', require('./src/routes/pedido.routes'));
 
 // Puerto dinámico
 const PORT = process.env.PORT || 5000;
