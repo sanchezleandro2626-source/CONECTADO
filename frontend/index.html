@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Urban Delivery Pro | Gestión Logística Avanzada</title>
+    <title>Urban Delivery Pro | E-Commerce Premium</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Hubot+Sans:wght@400;600;800&family=Mona+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Hubot+Sans:wght@400;600;700;900&family=Mona+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="src/css/estilos.css">
 </head>
 <body>
@@ -14,96 +14,179 @@
     <header class="app-header">
         <div class="header-container">
             <div class="logo-area">
-                <span class="logo-icon">⚡</span>
-                <h1>Urban Delivery <span class="badge-pro">PRO</span></h1>
+                <span class="logo-lightning">⚡</span>
+                <h1>URBAN DELIVERY <span class="badge-pro">PRO</span></h1>
             </div>
-            <div class="tasa-bcv-badge" id="bcvBadge">
-                <span class="indicator"></span> Tasa BCV: <strong id="tasaValor">Cargando...</strong>
+            
+            <div class="header-actions">
+                <div class="tasa-bcv-badge" id="bcvBadge">
+                    <span class="pulse-indicator"></span> 
+                    <span class="tasa-texto">BCV: <strong id="tasaValor">Cargando...</strong></span>
+                </div>
+                
+                <button type="button" id="btnAbrirPerfil" class="btn-icon-profile" aria-label="Abrir Perfil de Usuario">
+                    <div class="avatar-icon">👤</div>
+                </button>
+
+                <button id="btnAbrirCarrito" style="position: relative; background: #111; border: 1px solid #222; border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; transition: 0.2s;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm7 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+                    </svg>
+                    <span id="carritoContadorBadge" style="position: absolute; top: -5px; right: -5px; background: #d4af37; color: #000; font-weight: bold; font-size: 11px; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Hubot Sans', sans-serif;">0</span>
+                </button>
             </div>
         </div>
     </header>
 
+    <div id="burbujaNotificacion" class="hidden" style="position: fixed; bottom: 20px; right: 20px; background: #050505; color: #fff; border: 1px solid var(--gold-champagne); padding: 12px 24px; border-radius: 8px; z-index: 1000; font-weight: bold; box-shadow: 0 4px 20px rgba(0,0,0,0.5); transition: all 0.3s ease;"></div>
+
+    <div id="sidebarPerfil" class="sidebar-overlay hidden">
+        <div class="sidebar-content">
+            <div class="sidebar-header">
+                <div class="user-identity">
+                    <span class="user-avatar-large">👑</span>
+                    <div>
+                        <h3 id="sidebarNombreUsuario">Invitado Pro</h3>
+                        <p id="sidebarTelefonoUsuario">Sin vincular dispositivo</p>
+                    </div>
+                </div>
+                <button type="button" id="btnCerrarPerfil" class="btn-close-sidebar">&times;</button>
+            </div>
+            
+            <div class="sidebar-body">
+                <h4>Tu Historial de Compras Personal</h4>
+                <p class="sidebar-desc">Solo tú puedes ver las órdenes emitidas desde este smartphone o PC de forma aislada.</p>
+                <div id="historialIndividualCliente" class="historial-individual-lista">
+                    <p class="log-vacio">Aún no has procesado entregas en nuestra red.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <main class="app-container">
         
-        <section class="panel-interactivo">
+        <section class="seccion-catalogo">
             
             <div class="card buscador-card">
-                <label for="inputBusqueda">Explorar Catálogo Premium</label>
+                <label for="inputBusqueda" class="label-premium">Buscar en la Colección Exclusiva</label>
                 <div class="search-wrapper">
-                    <input type="text" id="inputBusqueda" placeholder="Buscar calzado, ropa, artículos..." autocomplete="off">
-                    <span class="search-icon">🔍</span>
+                    <input type="text" id="inputBusqueda" placeholder="Buscar calzado, ropa, artículos destacados..." autocomplete="off">
+                    <span class="search-icon-lens">🔍</span>
                 </div>
             </div>
 
             <div class="productos-grid" id="productosGrid">
+                
+                <div class="producto-item" data-id="PROD-001" data-ventas="0" style="position: relative;">
+                    <div class="badge-tendencia-container"></div>
+                    <div class="producto-imagen-placeholder" style="background: url('https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?q=80&w=600&auto=format&fit=crop') center/cover no-repeat; overflow:hidden;"></div>
+                    <h3>Nike Air Force 1 All White</h3>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top: auto;">
+                        <div class="producto-precio">$90.00</div>
+                        <small class="interacciones-count" style="color:var(--text-muted-gray); font-size:0.75rem; font-weight:600;">Interacciones: 0</small>
+                    </div>
+                    <button class="btn-agregar-carrito" data-id="PROD-001">Agregar al carrito</button>
                 </div>
 
+                <div class="producto-item" data-id="PROD-002" data-ventas="0" style="position: relative;">
+                    <div class="badge-tendencia-container"></div>
+                    <div class="producto-imagen-placeholder" style="background: url('https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?q=80&w=600&auto=format&fit=crop') center/cover no-repeat; overflow:hidden;"></div>
+                    <h3>Adidas Forum Low Classic White</h3>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top: auto;">
+                        <div class="producto-precio">$85.00</div>
+                        <small class="interacciones-count" style="color:var(--text-muted-gray); font-size:0.75rem; font-weight:600;">Interacciones: 0</small>
+                    </div>
+                    <button class="btn-agregar-carrito" data-id="PROD-002">Agregar al carrito</button>
+                </div>
+
+                <div class="producto-item" data-id="PROD-003" data-ventas="0" style="position: relative;">
+                    <div class="badge-tendencia-container"></div>
+                    <div class="producto-imagen-placeholder" style="background: url('https://images.unsplash.com/photo-1552346154-21d32810aba3?q=80&w=600&auto=format&fit=crop') center/cover no-repeat; overflow:hidden;"></div>
+                    <h3>Jordan 1 Retro High OG Bred</h3>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top: auto;">
+                        <div class="producto-precio">$150.00</div>
+                        <small class="interacciones-count" style="color:var(--text-muted-gray); font-size:0.75rem; font-weight:600;">Interacciones: 0</small>
+                    </div>
+                    <button class="btn-agregar-carrito" data-id="PROD-003">Agregar al carrito</button>
+                </div>
+
+                <div class="producto-item" data-id="PROD-004" data-ventas="0" style="position: relative;">
+                    <div class="badge-tendencia-container"></div>
+                    <div class="producto-imagen-placeholder" style="background: url('https://images.unsplash.com/photo-1539185441755-769473a23570?q=80&w=600&auto=format&fit=crop') center/cover no-repeat; overflow:hidden;"></div>
+                    <h3>New Balance 550 Shadow Grey</h3>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top: auto;">
+                        <div class="producto-precio">$110.00</div>
+                        <small class="interacciones-count" style="color:var(--text-muted-gray); font-size:0.75rem; font-weight:600;">Interacciones: 0</small>
+                    </div>
+                    <button class="btn-agregar-carrito" data-id="PROD-004">Agregar al carrito</button>
+                </div>
+
+            </div>
+        </section>
+
+        <section class="seccion-logistica-checkout">
             <div class="card checkout-card">
-                <h2>Datos de Facturación y Entrega</h2>
+                <h3>Formulario de Entrega Inmediata</h3>
                 <form id="formCheckout" onsubmit="return false;">
-                    
-                    <div class="form-group-row">
-                        <div class="form-group">
-                            <label for="txtNombre">Nombre del Cliente</label>
-                            <input type="text" id="txtNombre" required placeholder="Ej. Alejandro Silva">
-                        </div>
-                        <div class="form-group">
-                            <label for="txtTelefono">Teléfono de Contacto</label>
-                            <input type="tel" id="txtTelefono" required placeholder="Ej. 04121234567">
-                        </div>
-                    </div>
-
-                    <div class="form-group geo-box">
-                        <label>Ubicación de Despacho Exacta</label>
-                        <button type="button" id="btnGeolocalizar" class="btn-secondary">
-                            <span class="icon">📍</span> Vincular Mi Ubicación GPS (Requerido)
-                        </button>
-                        <div id="geoEstatus" class="geo-status-waiting">
-                            Ubicación no vinculada. Se requiere autorización GPS para calcular ruta.
-                        </div>
-                        <input type="text" id="txtDireccion" required placeholder="Punto de referencia detallado (Ej. Frente al CCCT, piso 2)">
-                    </div>
-
                     <div class="form-group">
-                        <label for="selectMetodoPago">Método de Pago</label>
-                        <select id="selectMetodoPago" required>
-                            <option value="PAGO_MOVIL">Pago Móvil (Bolívares al BCV)</option>
-                            <option value="EFECTIVO_DIVISAS">Efectivo Divisas ($)</option>
-                            <option value="ZELLE">Zelle ($)</option>
-                        </select>
+                        <label for="txtNombre" class="label-premium">Nombre Completo del Destinatario</label>
+                        <input type="text" id="txtNombre" required placeholder="Ej. Leandro Silva" autocomplete="name">
                     </div>
-
-                    <div class="form-group hidden" id="grupoEfectivo">
-                        <label for="selectBillete">¿Con qué billete pagará?</label>
-                        <select id="selectBillete">
-                            <option value="10">$10</option>
-                            <option value="20">$20</option>
-                            <option value="50">$50</option>
-                            <option value="100">$100</option>
-                        </select>
-                    </div>
-
-                    <button type="submit" id="btnProcesar" class="btn-primary" disabled>Procesar Orden de Entrega</button>
                 </form>
             </div>
-
         </section>
-
-        <section class="panel-monitoreo">
-            <div class="card monitor-card">
-                <div class="monitor-header">
-                    <h2>Panel de Control Logístico</h2>
-                    <span class="live-indicator">EN VIVO</span>
-                </div>
-                <p class="monitor-desc">Historial de órdenes procesadas en tiempo real en la red distribuida.</p>
-                
-                <div class="historial-pedidos" id="historialPedidos">
-                    <div class="loading-box">Cargando flujo de datos logísticos...</div>
-                </div>
-            </div>
-        </section>
-
     </main>
+
+    <div id="carritoOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); display: flex; justify-content: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; z-index: 9999;">
+        
+        <div style="width: 100%; max-width: 450px; height: 100%; background: #050505; border-left: 1px solid #111; display: flex; flex-direction: column; padding: 25px; box-sizing: border-box; transform: translateX(100%); transition: transform 0.3s ease;">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid #111; padding-bottom: 15px;">
+                <h2 style="color: #fff; margin: 0; font-family: 'Mona Sans', sans-serif; font-size: 20px;">Tu Bolsa de Compras <span id="carritoContador" style="font-size: 14px; color: #888;">(0 artículos)</span></h2>
+                <button id="btnCerrarCarrito" style="background: none; border: none; color: #888; font-size: 24px; cursor: pointer; transition: 0.2s;">✕</button>
+            </div>
+
+            <div id="carritoElementos" style="flex-grow: 1; overflow-y: auto; margin-bottom: 20px; padding-right: 5px;">
+            </div>
+
+            <div style="background: #111; border: 1px solid #222; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-family: 'Mona Sans', sans-serif;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                    <span style="font-size: 16px;">📍</span>
+                    <h4 style="color: #fff; margin: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Dirección de Entrega</h4>
+                </div>
+                <button id="btnFijarUbicacion" style="width: 100%; background: #111; color: #fff; border: 1px solid #d4af37; padding: 12px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; transition: 0.2s; text-transform: uppercase; letter-spacing: 0.5px;">
+                    Fijar mi ubicación GPS
+                </button>
+                <p id="txtEstadoUbicacion" style="margin: 8px 0 0 0; font-size: 11px; color: #888; text-align: center; font-style: italic;">
+                    Requerido para habilitar el motorizado en Caracas.
+                </p>
+            </div>
+
+            <div style="border-top: 1px solid #111; padding-top: 20px; font-family: 'Hubot Sans', sans-serif;">
+                <div style="display: flex; justify-content: space-between; color: #888; margin-bottom: 8px; font-size: 14px;">
+                    <span>Subtotal Productos:</span>
+                    <span id="resumenSubtotal">$0.00</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; color: #888; margin-bottom: 15px; font-size: 14px;">
+                    <span>Tarifa de Envío (Caracas):</span>
+                    <span id="resumenDelivery">$0.00</span>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px;">
+                    <span style="color: #fff; font-size: 16px; font-weight: bold;">Monto Total:</span>
+                    <span id="resumenTotal" style="color: #fff; font-size: 22px; font-weight: bold;">$0.00</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <span style="color: #666; font-size: 12px;">Monto de Cambio Oficial:</span>
+                    <span id="resumenTotalBs" style="color: #00e676; font-size: 16px; font-weight: bold;">0.00 Bs</span>
+                </div>
+
+                <button id="btnProcederPago" style="width: 100%; background: #d4af37; color: #000; border: none; padding: 14px; border-radius: 6px; font-weight: bold; font-size: 15px; cursor: pointer; transition: 0.2s; text-transform: uppercase; letter-spacing: 0.5px;">
+                    Proceder al Pago
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script src="src/js/app.js" type="module"></script>
 </body>
