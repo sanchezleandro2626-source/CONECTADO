@@ -3,33 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Monitoreo Full Stack</title>
-    <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background: #f8f9fa; color: #333; }
-        .card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        input, textarea { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-        button { background: #007bff; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 4px; cursor: pointer; width: 100%; }
-        button:hover { background: #0056b3; }
-        .mensaje-item { background: #e9ecef; padding: 12px; margin: 10px 0; border-radius: 4px; border-left: 5px solid #007bff; }
-        small { color: #6c757d; }
-    </style>
+    <title>Urban Delivery Pro | Gestión Logística Avanzada</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hubot+Sans:wght@400;600;800&family=Mona+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="src/css/estilos.css">
 </head>
 <body>
 
-    <h2>🛠️ Panel de Control (Escenario Real)</h2>
-    
-    <div class="card">
-        <h3>Enviar reporte al Servidor</h3>
-        <input type="text" id="inputAutor" placeholder="Tu nombre o rol (Ej: Desarrollador Leandro)">
-        <textarea id="inputContenido" placeholder="Escribe el avance del código o reporte aquí..." rows="3"></textarea>
-        <button id="btnEnviar">Guardar en Base de Datos</button>
-    </div>
+    <header class="app-header">
+        <div class="header-container">
+            <div class="logo-area">
+                <span class="logo-icon">⚡</span>
+                <h1>Urban Delivery <span class="badge-pro">PRO</span></h1>
+            </div>
+            <div class="tasa-bcv-badge" id="bcvBadge">
+                <span class="indicator"></span> Tasa BCV: <strong id="tasaValor">Cargando...</strong>
+            </div>
+        </div>
+    </header>
 
-    <div class="card">
-        <h3>Historial en MongoDB (Tiempo Real)</h3>
-        <div id="listaMensajes">Cargando reportes...</div>
-    </div>
+    <main class="app-container">
+        
+        <section class="panel-interactivo">
+            
+            <div class="card buscador-card">
+                <label for="inputBusqueda">Explorar Catálogo Premium</label>
+                <div class="search-wrapper">
+                    <input type="text" id="inputBusqueda" placeholder="Buscar calzado, ropa, artículos..." autocomplete="off">
+                    <span class="search-icon">🔍</span>
+                </div>
+            </div>
 
-    <script src="src/js/app.js"></script>
+            <div class="productos-grid" id="productosGrid">
+                </div>
+
+            <div class="card checkout-card">
+                <h2>Datos de Facturación y Entrega</h2>
+                <form id="formCheckout" onsubmit="return false;">
+                    
+                    <div class="form-group-row">
+                        <div class="form-group">
+                            <label for="txtNombre">Nombre del Cliente</label>
+                            <input type="text" id="txtNombre" required placeholder="Ej. Alejandro Silva">
+                        </div>
+                        <div class="form-group">
+                            <label for="txtTelefono">Teléfono de Contacto</label>
+                            <input type="tel" id="txtTelefono" required placeholder="Ej. 04121234567">
+                        </div>
+                    </div>
+
+                    <div class="form-group geo-box">
+                        <label>Ubicación de Despacho Exacta</label>
+                        <button type="button" id="btnGeolocalizar" class="btn-secondary">
+                            <span class="icon">📍</span> Vincular Mi Ubicación GPS (Requerido)
+                        </button>
+                        <div id="geoEstatus" class="geo-status-waiting">
+                            Ubicación no vinculada. Se requiere autorización GPS para calcular ruta.
+                        </div>
+                        <input type="text" id="txtDireccion" required placeholder="Punto de referencia detallado (Ej. Frente al CCCT, piso 2)">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="selectMetodoPago">Método de Pago</label>
+                        <select id="selectMetodoPago" required>
+                            <option value="PAGO_MOVIL">Pago Móvil (Bolívares al BCV)</option>
+                            <option value="EFECTIVO_DIVISAS">Efectivo Divisas ($)</option>
+                            <option value="ZELLE">Zelle ($)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group hidden" id="grupoEfectivo">
+                        <label for="selectBillete">¿Con qué billete pagará?</label>
+                        <select id="selectBillete">
+                            <option value="10">$10</option>
+                            <option value="20">$20</option>
+                            <option value="50">$50</option>
+                            <option value="100">$100</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" id="btnProcesar" class="btn-primary" disabled>Procesar Orden de Entrega</button>
+                </form>
+            </div>
+
+        </section>
+
+        <section class="panel-monitoreo">
+            <div class="card monitor-card">
+                <div class="monitor-header">
+                    <h2>Panel de Control Logístico</h2>
+                    <span class="live-indicator">EN VIVO</span>
+                </div>
+                <p class="monitor-desc">Historial de órdenes procesadas en tiempo real en la red distribuida.</p>
+                
+                <div class="historial-pedidos" id="historialPedidos">
+                    <div class="loading-box">Cargando flujo de datos logísticos...</div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="src/js/app.js" type="module"></script>
 </body>
 </html>

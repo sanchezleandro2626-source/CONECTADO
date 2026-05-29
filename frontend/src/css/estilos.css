@@ -1,0 +1,351 @@
+/* ==========================================================================
+   URBAN DELIVERY PRO - CORE ARCHITECTURE (CSS PREMIUM)
+   ========================================================================== */
+
+:root {
+    --bg-main: #0B0F19;
+    --bg-card: #151D30;
+    --bg-input: #1E2942;
+    --text-primary: #F3F4F6;
+    --text-secondary: #9CA3AF;
+    --primary: #3B82F6;
+    --primary-glow: rgba(59, 130, 246, 0.3);
+    --accent-neon: #10B981;
+    --accent-warn: #F59E0B;
+    --border-color: rgba(255, 255, 255, 0.06);
+    --radius-lg: 16px;
+    --radius-md: 12px;
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Reset de Fábrica Senior */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-family: 'Mona Sans', 'Hubot Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    line-height: 1.5;
+}
+
+/* ==========================================================================
+   HEADER COMPONENT
+   ========================================================================== */
+.app-header {
+    background: linear-gradient(180deg, rgba(21, 29, 48, 0.8) 0%, rgba(21, 29, 48, 0) 100%);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding: 1.25rem 2rem;
+}
+
+.header-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo-area {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.logo-area h1 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    font-family: 'Hubot Sans', sans-serif;
+}
+
+.badge-pro {
+    background: linear-gradient(90deg, #3B82F6 0%, #8B5CF6 100%);
+    color: white;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 6px;
+    font-weight: 900;
+    letter-spacing: 1px;
+}
+
+.tasa-bcv-badge {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.indicator {
+    width: 8px;
+    height: 8px;
+    background-color: var(--accent-neon);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--accent-neon);
+}
+
+/* ==========================================================================
+   LAYOUT CONTAINERS
+   ========================================================================== */
+.app-container {
+    max-width: 1400px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+    display: grid;
+    grid-template-columns: 1fr 450px;
+    gap: 2rem;
+}
+
+@media (max-width: 1024px) {
+    .app-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+.panel-interactivo {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* Estructura Base de Tarjetas Premium */
+.card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+/* ==========================================================================
+   PRODUCT GRID & CARDS
+   ========================================================================== */
+.productos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.5rem;
+}
+
+.producto-item {
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    transition: var(--transition-smooth);
+    cursor: pointer;
+}
+
+.producto-item:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary);
+    box-shadow: 0 8px 20px var(--primary-glow);
+}
+
+.producto-item h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.producto-precio {
+    color: var(--accent-neon);
+    font-weight: 700;
+    font-size: 1.25rem;
+}
+
+/* ==========================================================================
+   FORM CONTROLS & INTERFACES
+   ========================================================================== */
+.form-group-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+
+label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+input, select {
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 0.875rem 1.25rem;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    outline: none;
+    transition: var(--transition-smooth);
+}
+
+input:focus, select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+/* Barra de Búsqueda de Alto Impacto */
+.search-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-wrapper input {
+    width: 100%;
+    padding-left: 3rem;
+}
+
+.search-icon {
+    position: absolute;
+    left: 1.25rem;
+    color: var(--text-secondary);
+}
+
+/* Bloque Especial de Geolocalización */
+.geo-box {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed var(--border-color);
+    padding: 1.25rem;
+    border-radius: var(--radius-md);
+}
+
+#geoEstatus {
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.geo-status-waiting { color: var(--accent-warn); background: rgba(245, 158, 11, 0.05); }
+.geo-status-success { color: var(--accent-neon); background: rgba(16, 185, 129, 0.05); }
+
+/* ==========================================================================
+   BUTTONS (PREMIUM STATES)
+   ========================================================================== */
+.btn-primary, .btn-secondary {
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius-md);
+    border: none;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    color: white;
+    width: 100%;
+    box-shadow: 0 4px 14px var(--primary-glow);
+}
+
+.btn-primary:hover:not(:disabled) {
+    background-color: #2563EB;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+}
+
+.btn-primary:disabled {
+    background-color: #4B5563;
+    color: #9CA3AF;
+    cursor: not-allowed;
+    box-shadow: none;
+    opacity: 0.6;
+}
+
+.btn-secondary {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    width: 100%;
+}
+
+.btn-secondary:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ==========================================================================
+   MONITORING LOGS & HISTORIAL (SIDE PANEL)
+   ========================================================================== */
+.monitor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.live-indicator {
+    background-color: rgba(16, 185, 129, 0.15);
+    color: var(--accent-neon);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    letter-spacing: 1px;
+    animation: pulse 2s infinite;
+}
+
+.monitor-desc {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin-bottom: 1.5rem;
+}
+
+.historial-pedidos {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+/* Tarjeta individual de pedido en el historial */
+.pedido-card-log {
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.hidden { display: none !important; }
+
+/* Animación de Pulso Premium */
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
