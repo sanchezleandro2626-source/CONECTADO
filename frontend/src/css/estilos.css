@@ -784,3 +784,59 @@ input:focus, select:focus {
     background: rgba(0, 0, 0, 0.2);
     border-radius: 4px;
 }
+
+/* ==========================================================================
+   📱 BLINDAJE RESPONSIVE PARA LA MEDALLA MVP (Para todos los dispositivos)
+   ========================================================================== */
+
+/* Asegurar el contenedor donde se mete la medalla */
+.badge-tendencia-container {
+    display: block !important;
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+/* Estilo unificado de la medalla para que no se esconda en pantallas pequeñas */
+.badge-gold-mvp {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px; /* Espacio fijo entre el rayito y el texto */
+    background: linear-gradient(135deg, #ffd700, #ffa500);
+    color: #000 !important;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 12px; /* Tamaño ideal tanto para PC como para celular */
+    font-family: 'Mona Sans', sans-serif;
+    box-shadow: 0 2px 8px rgba(255, 165, 0, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Asegurar que el emoji del rayito siempre sea visible y no se desplace */
+.badge-gold-mvp span {
+    display: inline-block !important;
+    font-size: 14px;
+    line-height: 1;
+}
+
+/* Asegurar que el texto de interacciones no se oculte en móviles */
+.interacciones-count {
+    display: block !important;
+    font-size: 11px;
+    color: #888;
+    margin-top: 4px;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Ajuste para el Grid de productos en pantallas táctiles pequeñas */
+@media (max-width: 768px) {
+    .producto-item {
+        padding: 12px !important; /* Espacio interno cómodo en celulares */
+    }
+    .badge-gold-mvp {
+        font-size: 11px; /* Un pelín más pequeño en móvil para que no se corte */
+        padding: 4px 10px;
+    }
+}
