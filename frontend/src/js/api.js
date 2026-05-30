@@ -2,6 +2,17 @@
    🌐 MÓDULO CENTRAL DE SERVICIOS Y CONEXIONES API (api.js) - REALTIME GLOBAL
    ========================================================================== */
 
+// 🕵️‍♂️ DETECTOR DINÁMICO DE ENTORNO
+// Si estás en localhost/Live Server, apunta a tu dominio real de producción en Vercel. 
+// Si ya está en producción, usa la ruta relativa normal.
+const OBTENER_BASE_URL = () => {
+    if (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
+        // 🔥 REEMPLAZA ESTA URL por el enlace real de tu proyecto en Vercel (ej: 'https://tu-proyecto.vercel.app')
+        return 'https://urban-delivery-pro.vercel.app'; 
+    }
+    return ''; // En producción usa la ruta relativa limpia
+};
+
 /**
  * Protocolo de Triple Blindaje para la obtención de la tasa oficial del BCV
  */
@@ -36,9 +47,9 @@ export async function consultarTasaBCV(tasaPorDefecto) {
  */
 export async function obtenerVentasGlobalesTendencia() {
     try {
-        // 📡 CONEXIÓN REAL CON TU BACKEND EN VERCEL
-        // Llama a tu función serverless en Vercel que consulta la colección en MongoDB Atlas
-        const respuesta = await fetch('/api/tendencias');
+        const BASE_URL = OBTENER_BASE_URL();
+        // 📡 Consulta el backend de Vercel de forma inteligente según el entorno
+        const respuesta = await fetch(`${BASE_URL}/api/tendencias`);
         
         if (respuesta.ok) {
             const data = await respuesta.json();
@@ -46,7 +57,7 @@ export async function obtenerVentasGlobalesTendencia() {
             return data; 
         }
         
-        console.warn("⚠️ No se pudieron obtener las tendencias desde MongoDB. Usando fallback.");
+        console.warn("⚠️ El servidor de MongoDB Atlas retornó un estado no exitoso. Usando fallback.");
         return null;
     } catch (e) {
         console.error("🚨 Error crítico en conexión de base de datos global (MongoDB):", e);
@@ -60,9 +71,9 @@ export async function obtenerVentasGlobalesTendencia() {
  */
 export async function registrarVentaGlobalEnServidor(idProducto, cantidad) {
     try {
-        // 📡 ACTUALIZACIÓN REAL EN MONGO DB MEDIANTE VERCEL
-        // Hace un POST a tu endpoint para ejecutar un 'updateOne' o '$inc' en Atlas
-        await fetch('/api/tendencias/incrementar', {
+        const BASE_URL = OBTENER_BASE_URL();
+        // 📡 Hace un POST a tu endpoint para ejecutar un 'updateOne' o '$inc' en Atlas
+        await fetch(`${BASE_URL}/api/tendencias/incrementar`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
