@@ -5,9 +5,9 @@
 // 🕵️‍♂️ DETECTOR DINÁMICO DE ENTORNO
 const OBTENER_BASE_URL = () => {
     if (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
-        // 🔥 IMPORTANTE: Asegúrate de colocar aquí la URL real de tu proyecto en Vercel
+        // 🚨 CONFIGURACIÓN CRÍTICA: Pon aquí tu dominio real de Vercel sin la barra diagonal (/) al final.
         // Ejemplo: 'https://urban-delivery-pro.vercel.app'
-        return 'https://urban-delivery-pro.vercel.app'; 
+        return 'https://urban-delivery.vercel.app'; 
     }
     return ''; // En producción usa la ruta relativa limpia
 };
@@ -47,18 +47,27 @@ export async function consultarTasaBCV(tasaPorDefecto) {
 export async function obtenerVentasGlobalesTendencia() {
     try {
         const BASE_URL = OBTENER_BASE_URL();
-        const respuesta = await fetch(`${BASE_URL}/api/tendencias`);
         
-        // 🛡️ CONTROL DE FLUJO SEGURO: Verificamos si la respuesta realmente contiene un JSON válido
+        // Colocamos un tiempo límite (Timeout) para evitar llamadas colgadas eternamente
+        const controladorTiempo = new AbortController();
+        const idTiempo = setTimeout(() => controladorTiempo.abort(), 4000); // 4 segundos máx
+
+        const respuesta = await fetch(`${BASE_URL}/api/tendencias`, { 
+            signal: controladorTiempo.signal 
+        });
+        
+        clearTimeout(idTiempo);
+
+        // Verificación exhaustiva del formato recibido
         if (respuesta.ok && respuesta.headers.get('content-type')?.includes('application/json')) {
             const data = await respuesta.json();
-            return data; 
+            if (data && typeof data === 'object') return data;
         }
         
-        console.warn("⚠️ Servidor local sin acceso a rutas API. Activando contingencia de datos.");
+        console.warn("⚠️ Formato de respuesta inesperado del servidor. Activando contingencia de datos.");
         return recuperarEstructuraPorDefecto();
     } catch (e) {
-        console.error("🚨 Error en conexión de base de datos global (MongoDB):", e);
+        console.warn("🚨 Conexión de red limitada en entorno local. Ejecutando protocolo de respaldo.");
         return recuperarEstructuraPorDefecto();
     }
 }
@@ -80,7 +89,6 @@ export async function registrarVentaGlobalEnServidor(idProducto, cantidad) {
                 cantidad: cantidad
             })
         });
-
         console.log(`📡 MongoDB Atlas Actualizado: Producto ${idProducto} sumó +${cantidad} interacciones.`);
     } catch (e) {
         console.warn("No se pudo sincronizar la venta con MongoDB Atlas:", e);
@@ -96,7 +104,7 @@ export async function enviarMensajeWhatsApp(datosOrden) {
 
 /**
  * 🔄 CONTINGENCIA CONTROLADA
- * Entrega un objeto limpio estructurado para evitar que explote app.js en desarrollo local
+ * Saca los datos locales para que las tarjetas rendericen sin problemas en la laptop
  */
 function recuperarEstructuraPorDefecto() {
     return {
