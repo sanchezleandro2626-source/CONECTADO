@@ -17,7 +17,10 @@ const DOM = {
     carritoOverlay: document.getElementById('carritoOverlay'),
     
     // 📍 INYECCIÓN PASIVA: Elemento para capturar la localización desde el carrito
-    btnUbicacion: document.getElementById('btnFijarUbicacion')
+    btnUbicacion: document.getElementById('btnFijarUbicacion'),
+
+    // 🔍 INYECCIÓN DEL BUSCADOR: Mapeo del input en el objeto DOM
+    inputBusqueda: document.getElementById('inputBusqueda')
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -170,6 +173,46 @@ document.addEventListener('DOMContentLoaded', async () => {
         DOM.btnUbicacion.addEventListener('click', () => {
             console.log("⚡ Botón GPS presionado en la Bolsa de Compras.");
             obtenerUbicacionCliente();
+        });
+    }
+
+    // ==========================================
+    // 🔍 MOTOR DE BÚSQUEDA PREDICTIVA Y FILTRADO EN TIEMPO REAL
+    // ==========================================
+    if (DOM.inputBusqueda && DOM.productosGrid) {
+        DOM.inputBusqueda.addEventListener('input', (e) => {
+            const terminoBusqueda = e.target.value.toLowerCase().trim();
+            const tarjetasProductos = DOM.productosGrid.querySelectorAll('.producto-item');
+            
+            tarjetasProductos.forEach(tarjeta => {
+                const nombreProducto = tarjeta.querySelector('h3').textContent.toLowerCase();
+                
+                if (nombreProducto.includes(terminoBusqueda)) {
+                    tarjeta.classList.remove('hidden');
+                } else {
+                    tarjeta.classList.add('hidden');
+                }
+            });
+            
+            // Notificación visual si el catálogo queda vacío al buscar
+            const productosVisibles = DOM.productosGrid.querySelectorAll('.producto-item:not(.hidden)');
+            let mensajeVacio = document.getElementById('búsquedaVacíaMensaje');
+            
+            if (productosVisibles.length === 0) {
+                if (!mensajeVacio) {
+                    mensajeVacio = document.createElement('p');
+                    mensajeVacio.id = 'búsquedaVacíaMensaje';
+                    mensajeVacio.textContent = 'No encontramos modelos que coincidan con tu búsqueda.';
+                    mensajeVacio.style.color = '#888';
+                    mensajeVacio.style.textAlign = 'center';
+                    mensajeVacio.style.gridColumn = '1 / -1';
+                    mensajeVacio.style.padding = '40px 20px';
+                    mensajeVacio.style.fontFamily = "'Mona Sans', sans-serif";
+                    DOM.productosGrid.appendChild(mensajeVacio);
+                }
+            } else {
+                if (mensajeVacio) mensajeVacio.remove();
+            }
         });
     }
     
