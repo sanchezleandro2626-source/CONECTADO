@@ -5,7 +5,7 @@
 // 🕵️‍♂️ DETECTOR DINÁMICO DE ENTORNO
 const OBTENER_BASE_URL = () => {
     if (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
-        // ✅ Mantienes tu URL real corregida por ti
+        // ✅ Forzamos la URL real para que la laptop consulte la misma base de datos que el teléfono
         return 'https://urban-delivery.vercel.app'; 
     }
     return ''; // En producción usa la ruta relativa limpia
@@ -17,7 +17,7 @@ const OBTENER_BASE_URL = () => {
 export async function consultarTasaBCV(tasaPorDefecto) {
     let tasaFinal = tasaPorDefecto;
 
-    // 💻 INYECCIÓN LOCAL: Si estás en la laptop, salta directo al LocalStorage para limpiar la consola de errores CORS
+    // Para la tasa, el entorno local puede usar LocalStorage para no saturar de logs la consola
     if (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
         const tasaRecuperada = parseFloat(localStorage.getItem('urban_last_bcv'));
         if (tasaRecuperada) {
@@ -26,7 +26,6 @@ export async function consultarTasaBCV(tasaPorDefecto) {
         return { tasa: tasaFinal, exito: false, origen: "Tasa Base por Defecto" };
     }
 
-    // 🌐 En producción real (Vercel / Teléfono) sí consulta las APIs externas normalmente
     try {
         const respuesta = await fetch('https://ve.centralbank.workers.dev/v1/bcv');
         if (respuesta.ok) {
@@ -51,32 +50,30 @@ export async function consultarTasaBCV(tasaPorDefecto) {
 }
 
 /**
- * 🔥 MOTOR DE INTERACCIONES CENTRALIZADO EN LA NUBE
+ * 🔥 MOTOR DE INTERACCIONES CENTRALIZADO EN LA NUBE (Sincronizado al 100%)
  */
 export async function obtenerVentasGlobalesTendencia() {
-    // Si estás programando en la laptop, usamos directo el respaldo para mantener la consola limpia de bloqueos CORS externos
-    if (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
-        return recuperarEstructuraPorDefecto();
-    }
-
     try {
         const BASE_URL = OBTENER_BASE_URL();
         const controladorTiempo = new AbortController();
         const idTiempo = setTimeout(() => controladorTiempo.abort(), 4000);
 
+        // La laptop e internet consultan exactamente el mismo endpoint en Vercel
         const respuesta = await fetch(`${BASE_URL}/api/tendencias`, { 
-            signal: controladorTiempo.signal 
+            signal: controladorTiempo.signal,
+            mode: 'cors' // 👈 Forzamos el modo CORS de manera explícita para el navegador
         });
         
         clearTimeout(idTiempo);
 
-        if (respuesta.ok && respuesta.headers.get('content-type')?.includes('application/json')) {
+        if (respuesta.ok) {
             const data = await respuesta.json();
             if (data && typeof data === 'object') return data;
         }
         
         return recuperarEstructuraPorDefecto();
     } catch (e) {
+        // Si hay bloqueo o error en la laptop, recurre al respaldo sin romper el flujo de app.js
         return recuperarEstructuraPorDefecto();
     }
 }
@@ -89,6 +86,7 @@ export async function registrarVentaGlobalEnServidor(idProducto, cantidad) {
         const BASE_URL = OBTENER_BASE_URL();
         await fetch(`${BASE_URL}/api/tendencias/incrementar`, {
             method: 'POST',
+            mode: 'cors', // 👈 Solicitud CORS para entornos cruzados
             headers: {
                 'Content-Type': 'application/json'
             },
@@ -99,7 +97,6 @@ export async function registrarVentaGlobalEnServidor(idProducto, cantidad) {
         });
         console.log(`📡 MongoDB Atlas Actualizado: Producto ${idProducto} sumó +${cantidad} interacciones.`);
     } catch (e) {
-        // Silenciado el rastro de bloqueo en entorno local para mantener limpia la consola
         if (window.location.hostname !== '127.0.0.1' && window.location.hostname !== 'localhost') {
             console.warn("No se pudo sincronizar con MongoDB:", e);
         }

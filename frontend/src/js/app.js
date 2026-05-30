@@ -5,7 +5,6 @@ import { obtenerUbicacionCliente } from './mapa.js';
 import { conmutarPanelesPagoVisual, validarComprobantePago } from '../modulos/pagos.js';
 
 // 🆕 INYECCIÓN DEL NUEVO MÓDULO DE APIS DESCENTRALIZADO CON EL REGISTRO GLOBAL
-// (Se agrega 'registrarVentaGlobalEnServidor' a las importaciones)
 import { consultarTasaBCV, enviarMensajeWhatsApp, obtenerVentasGlobalesTendencia, registrarVentaGlobalEnServidor } from './api.js';
 
 const DOM = {
@@ -43,8 +42,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ==========================================
     // 🚀 CONTROL DE TASA MEDIANTE MÓDULO API DE TRIPLE BLINDAJE
     // ==========================================
-    
-    // Llamamos al módulo externo pasándole la tasa base por si no hay conexión
     const resultadoBCV = await consultarTasaBCV(TASA_BOLIVARES);
 
     if (resultadoBCV.exito) {
@@ -52,7 +49,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         localStorage.setItem('urban_last_bcv', tasaFinal);
         console.log(`✅ Tasa cargada desde ${resultadoBCV.origen}: ${tasaFinal.toFixed(2)}`);
     } else {
-        // Mantenemos intacto tu protocolo de emergencia local si internet se cae por completo
         const tasaRecuperada = parseFloat(localStorage.getItem('urban_last_bcv'));
         if (tasaRecuperada) {
             tasaFinal = tasaRecuperada * 1.02; // Colchón del 2% de protección empresarial
@@ -68,7 +64,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     renderizarCarrito(nodosInterfazCarrito);
 
-   // ==========================================
+    // ==========================================
     // 🔥 MOTOR DE EVALUACIÓN DE TENDENCIAS GLOBAL CON REORDENAMIENTO FÍSICO Y GARANTÍA 24/7
     // ==========================================
     const actualizarMedallasTendencia = async () => {
@@ -104,20 +100,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 4. DETERMINAR EL GANADOR INDISCUTIBLE PARA CORONARLO 24/7
         let idProductoGanador = null;
         if (tarjetasProductos.length > 0) {
-            // Garantía visual: Se elige siempre el primero de la lista ordenada. 
-            // Si todos están en 0, el primero por defecto se lleva la corona para no dejar la interfaz vacía.
             idProductoGanador = tarjetasProductos[0].getAttribute('data-id');
         }
 
         // 5. REINYECCIÓN EN EL DOM Y ASIGNACIÓN DE MEDALLA MVP
         tarjetasProductos.forEach(tarjeta => {
-            // Lo mueve físicamente a su nueva posición en el Grid de la página
             DOM.productosGrid.appendChild(tarjeta); 
 
             const id = tarjeta.getAttribute('data-id');
             const contenedorBadge = tarjeta.querySelector('.badge-tendencia-container');
             
-            // Gestionar la medalla cromada MVP solo para el verdadero rey del conteo
             if (id === idProductoGanador) {
                 if (contenedorBadge && !contenedorBadge.querySelector('.badge-gold-mvp')) {
                     contenedorBadge.innerHTML = `
@@ -128,7 +120,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 tarjeta.classList.add('tarjeta-mvp-activa');
             } else {
-                // Limpiar a los que hayan sido destronados por nuevos records de venta de forma segura
                 if (contenedorBadge) contenedorBadge.innerHTML = "";
                 tarjeta.classList.remove('tarjeta-mvp-activa');
             }
@@ -163,8 +154,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             DOM.carritoOverlay.style.opacity = "1";
             DOM.carritoOverlay.style.pointerEvents = "auto";
             DOM.carritoOverlay.firstElementChild.style.transform = "translateX(0)";
-            
-            // 📍 REPARACIÓN: Congela el fondo de la página, pero NO rompe los gestos táctiles del contenedor interno
             document.body.style.overflow = "hidden";
         }
     };
@@ -174,8 +163,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             DOM.carritoOverlay.style.opacity = "0";
             DOM.carritoOverlay.style.pointerEvents = "none";
             DOM.carritoOverlay.firstElementChild.style.transform = "translateX(100%)";
-            
-            // Devuelve el comportamiento normal a la pantalla
             document.body.style.overflow = "auto";
         }
     };
@@ -213,7 +200,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         DOM.carritoElementos.addEventListener('click', (e) => {
             if (e.target.classList.contains('btn-eliminar-item')) {
                 const idProducto = e.target.getAttribute('data-id');
-                // ✅ CORREGIDO: Se eliminó el 'delete idProducto' que trancaba el Strict Mode
                 eliminarDelCarrito(idProducto, nodosInterfazCarrito);
             }
         });
@@ -273,7 +259,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ==========================================
     if (DOM.btnProcederPago) {
         DOM.btnProcederPago.addEventListener('click', async () => {
-            const itemsEnBolsa = DOM.carritoElementos.querySelectorAll('[data-id]');
+            // Capturamos los elementos del contenedor de la interfaz del carrito
+            const itemsEnBolsa = DOM.carritoElementos.querySelectorAll('.carrito-item, [data-id]');
             
             if (itemsEnBolsa.length === 0) {
                 alert("Tu bolsa de compras está vacía. Agrega productos para procesar la orden.");
@@ -292,8 +279,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             // 🔥 INYECCIÓN CRÍTICA: Reportar y guardar las compras en el servidor para sincronizar todo
             for (const item of itemsEnBolsa) {
                 const id = item.getAttribute('data-id');
-                const inputCantidad = item.querySelector('.carrito-item-cantidad') || item.querySelector('input');
-                const cantidadComprada = inputCantidad ? parseInt(inputCantidad.value) || 1 : 1;
+                if (!id) continue; // Salto de seguridad si no tiene ID asignado
+
+                // Optimización del selector para asegurar la lectura real del input numérico
+                const selectorInput = item.querySelector('.carrito-item-cantidad') || item.querySelector('input[type="number"]') || item.querySelector('input');
+                const cantidadComprada = selectorInput ? parseInt(selectorInput.value) || 1 : 1;
 
                 // 1. Mantenemos tu respaldo local en LocalStorage intacto
                 const ventasAnteriores = parseInt(localStorage.getItem(`ventas_${id}`)) || 0;
@@ -310,5 +300,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             cerrarMenuCarrito();
         });
     }
+    
+    // ==========================================
+    // 🔄 MOTOR REACTIVO EN TIEMPO REAL GLOBAL (Cada 10 segundos)
+    // ==========================================
+    // Esto mantendrá a todos los usuarios sincronizados al mismo tiempo
+    setInterval(async () => {
+        console.log("📡 Sincronizando tendencias globales con MongoDB Atlas...");
+        await actualizarMedallasTendencia();
+    }, 10000); // 10000 milisegundos = 10 segundos
     
 });
