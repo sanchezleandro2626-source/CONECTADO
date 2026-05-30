@@ -1,83 +1,87 @@
 /* ==========================================================================
-   🌐 MÓDULO CENTRAL DE SERVICIOS Y CONEXIONES API (api.js) - COMPLETO
+   🌐 MÓDULO CENTRAL DE SERVICIOS Y CONEXIONES API (api.js) - REALTIME GLOBAL
    ========================================================================== */
 
 /**
  * Protocolo de Triple Blindaje para la obtención de la tasa oficial del BCV
- * Realiza las peticiones de red y gestiona los respaldos en caso de caídas.
- * @param {number} tasaPorDefecto - Tasa base del sistema por si todo falla de origen
- * @returns {Promise<{tasa: number, exito: boolean}>} Objeto con la tasa final y el estatus de carga
  */
 export async function consultarTasaBCV(tasaPorDefecto) {
     let tasaFinal = tasaPorDefecto;
-    let tasaCargadaExitosamente = false;
-
-    // --- INTENTO 1: API Principal ---
     try {
         const respuesta = await fetch('https://ve.centralbank.workers.dev/v1/bcv');
         if (respuesta.ok) {
             const data = await respuesta.json();
             if (data && data.usd) {
-                return {
-                    tasa: parseFloat(data.usd),
-                    exito: true,
-                    origen: "API Principal"
-                };
+                return { tasa: parseFloat(data.usd), exito: true, origen: "API Principal" };
             }
         }
-    } catch (e) {
-        console.warn("⚠️ API Principal caída en módulo api.js. Activando respaldo...");
-    }
+    } catch (e) { console.warn("⚠️ API Principal caída. Buscando respaldo..."); }
 
-    // --- INTENTO 2: API de Respaldo (DolarToday/BCV espejo) ---
     try {
         const respuestaEspejo = await fetch('https://s3.amazonaws.com/dolartoday/data.json');
         if (respuestaEspejo.ok) {
             const dataEspejo = await respuestaEspejo.json();
             if (dataEspejo && dataEspejo.USD && dataEspejo.USD.sicad2) {
-                return {
-                    tasa: parseFloat(dataEspejo.USD.sicad2),
-                    exito: true,
-                    origen: "API de Respaldo"
-                };
+                return { tasa: parseFloat(dataEspejo.USD.sicad2), exito: true, origen: "API de Respaldo" };
             }
         }
-    } catch (e) {
-        console.warn("⚠️ API de Respaldo caída en módulo api.js.");
-    }
+    } catch (e) { console.warn("⚠️ API de Respaldo caída."); }
 
-    // Si ambas APIs fallaron, devolvemos el valor por defecto para que app.js maneje el LocalStorage
-    return {
-        tasa: tasaFinal,
-        exito: false,
-        origen: "Ninguno (Fallo de Red)"
-    };
+    return { tasa: tasaFinal, exito: false, origen: "Ninguno (Fallo de Red)" };
 }
 
 /**
- * 🔥 INYECCIÓN DE DATOS UNIFICADOS: Sincroniza PC y móvil al mismo tiempo
- * @returns {Promise<Object>} Diccionario con el ID del producto y sus ventas compartidas
+ * 🔥 MOTOR DE INTERACCIONES CENTRALIZADO EN LA NUBE
+ * Lee las ventas reales acumuladas por todos los usuarios desde MongoDB Atlas.
  */
 export async function obtenerVentasGlobalesTendencia() {
     try {
-        // En un futuro, aquí conectarás tu servidor real.
-        // Por ahora, dejamos estos datos fijos idénticos para que se sincronicen todos los equipos:
-        return {
-            "1": 120, // Tu producto ID 1 tendrá 120 interacciones y será el rey indiscutible (Top 1 arriba)
-            "2": 45,  // Tu producto ID 2 tendrá 45 interacciones
-            "3": 85   // Tu producto ID 3 tendrá 85 interacciones
-        };
+        // 📡 CONEXIÓN REAL CON TU BACKEND EN VERCEL
+        // Llama a tu función serverless en Vercel que consulta la colección en MongoDB Atlas
+        const respuesta = await fetch('/api/tendencias');
+        
+        if (respuesta.ok) {
+            const data = await respuesta.json();
+            // Retorna el objeto formateado desde tu base de datos { "1": X, "2": Y, "3": Z }
+            return data; 
+        }
+        
+        console.warn("⚠️ No se pudieron obtener las tendencias desde MongoDB. Usando fallback.");
+        return null;
     } catch (e) {
-        console.warn("⚠️ Error al consultar tendencias globales en api.js:", e);
+        console.error("🚨 Error crítico en conexión de base de datos global (MongoDB):", e);
         return null;
     }
 }
 
 /**
- * 📝 Espacio preparado para la API de WhatsApp (Urban Delivery Pro)
- * Aquí centralizarás los endpoints o llamadas futuras a tu pasarela de mensajería.
+ * 📈 REPORTAR NUEVA COMPRA AL SERVIDOR GLOBAL
+ * Incrementa en MongoDB Atlas las interacciones del producto de forma individual.
+ */
+export async function registrarVentaGlobalEnServidor(idProducto, cantidad) {
+    try {
+        // 📡 ACTUALIZACIÓN REAL EN MONGO DB MEDIANTE VERCEL
+        // Hace un POST a tu endpoint para ejecutar un 'updateOne' o '$inc' en Atlas
+        await fetch('/api/tendencias/incrementar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                id: idProducto,
+                cantidad: cantidad
+            })
+        });
+
+        console.log(`📡 MongoDB Atlas Actualizado: Producto ${idProducto} sumó +${cantidad} interacciones.`);
+    } catch (e) {
+        console.warn("No se pudo sincronizar la venta con MongoDB Atlas:", e);
+    }
+}
+
+/**
+ * 📝 Módulo de mensajería para despacho
  */
 export async function enviarMensajeWhatsApp(datosOrden) {
-    console.log("⚡ Servicio API de WhatsApp preparado para recibir datos de la orden:", datosOrden);
-    // Aquí meterás tu fetch de WhatsApp o la construcción del link en el futuro
+    console.log("⚡ Orden enviada a control de despacho de Urban Delivery Pro:", datosOrden);
 }

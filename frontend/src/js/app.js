@@ -4,9 +4,9 @@ import { obtenerUbicacionCliente } from './mapa.js';
 // 💳 Importación de controladores de pago
 import { conmutarPanelesPagoVisual, validarComprobantePago } from '../modulos/pagos.js';
 
-// 🆕 INYECCIÓN DEL NUEVO MÓDULO DE APIS DESCENTRALIZADO
-// (Asumiendo que api.js está en la misma carpeta js que app.js)
-import { consultarTasaBCV, enviarMensajeWhatsApp, obtenerVentasGlobalesTendencia } from './api.js';
+// 🆕 INYECCIÓN DEL NUEVO MÓDULO DE APIS DESCENTRALIZADO CON EL REGISTRO GLOBAL
+// (Se agrega 'registrarVentaGlobalEnServidor' a las importaciones)
+import { consultarTasaBCV, enviarMensajeWhatsApp, obtenerVentasGlobalesTendencia, registrarVentaGlobalEnServidor } from './api.js';
 
 const DOM = {
     tasaValor: document.getElementById('tasaValor'),
@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 tarjeta.classList.add('tarjeta-mvp-activa');
             } else {
-                // Limpiar a los que hayan sido destronados por nuevos records de venta
+                // Limpiar a los que hayan sido destronados por nuevos records de venta de forma segura
                 if (contenedorBadge) contenedorBadge.innerHTML = "";
                 tarjeta.classList.remove('tarjeta-mvp-activa');
             }
@@ -213,6 +213,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         DOM.carritoElementos.addEventListener('click', (e) => {
             if (e.target.classList.contains('btn-eliminar-item')) {
                 const idProducto = e.target.getAttribute('data-id');
+                // ✅ CORREGIDO: Se eliminó el 'delete idProducto' que trancaba el Strict Mode
                 eliminarDelCarrito(idProducto, nodosInterfazCarrito);
             }
         });
@@ -268,7 +269,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ==========================================
-    // 💳 DETONADOR DE COMPRA - DISPARO E INCREMENTO DE TENDENCIAS
+    // 💳 DETONADOR DE COMPRA - DISPARO E INCREMENTO DE TENDENCIAS CENTRALIZADAS
     // ==========================================
     if (DOM.btnProcederPago) {
         DOM.btnProcederPago.addEventListener('click', async () => {
@@ -283,24 +284,29 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return; 
             }
 
-            console.log(`🛒 Procesando orden mediante: ${metodoSeleccionadoActivo}. Incrementando interacciones.`);
+            console.log(`🛒 Procesando orden mediante: ${metodoSeleccionadoActivo}. Incrementando interacciones a nivel global.`);
 
             // 🆕 LLAMADA PASIVA AL MÓDULO DE WHATSAPP
             enviarMensajeWhatsApp(itemsEnBolsa);
 
-            itemsEnBolsa.forEach(item => {
+            // 🔥 INYECCIÓN CRÍTICA: Reportar y guardar las compras en el servidor para sincronizar todo
+            for (const item of itemsEnBolsa) {
                 const id = item.getAttribute('data-id');
                 const inputCantidad = item.querySelector('.carrito-item-cantidad') || item.querySelector('input');
                 const cantidadComprada = inputCantidad ? parseInt(inputCantidad.value) || 1 : 1;
 
+                // 1. Mantenemos tu respaldo local en LocalStorage intacto
                 const ventasAnteriores = parseInt(localStorage.getItem(`ventas_${id}`)) || 0;
                 localStorage.setItem(`ventas_${id}`, ventasAnteriores + cantidadComprada);
-            });
 
-            // Re-ejecutar el ordenamiento global inmediatamente después de la compra exitosa
+                // 2. 📡 COMUNICACIÓN GLOBAL: Enviamos el ID y la cantidad directo al servidor unificado (Vercel -> MongoDB Atlas)
+                await registrarVentaGlobalEnServidor(id, cantidadComprada);
+            }
+
+            // Re-ejecutar el algoritmo de reordenamiento e inyección de medallas al instante
             await actualizarMedallasTendencia();
 
-            alert("¡Pedido Procesado Exitosamente! Su pago está siendo verificado y el motorizado en Caracas va en camino. Las interacciones de tendencia han sido actualizadas.");
+            alert("¡Pedido Procesado Exitosamente! Su pago está siendo verificado y el motorizado en Caracas va en camino. Las interacciones de tendencia han sido actualizadas globalmente.");
             cerrarMenuCarrito();
         });
     }
