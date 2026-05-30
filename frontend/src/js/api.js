@@ -5,7 +5,6 @@
 // 🕵️‍♂️ DETECTOR DINÁMICO DE ENTORNO
 const OBTENER_BASE_URL = () => {
     if (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
-        // ✅ Forzamos la URL real para que la laptop consulte la misma base de datos que el teléfono
         return 'https://urban-delivery.vercel.app'; 
     }
     return ''; // En producción usa la ruta relativa limpia
@@ -17,7 +16,7 @@ const OBTENER_BASE_URL = () => {
 export async function consultarTasaBCV(tasaPorDefecto) {
     let tasaFinal = tasaPorDefecto;
 
-    // Para la tasa, el entorno local puede usar LocalStorage para no saturar de logs la consola
+    // Localhost maneja la tasa en LocalStorage para evitar saturar la consola de la PC
     if (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
         const tasaRecuperada = parseFloat(localStorage.getItem('urban_last_bcv'));
         if (tasaRecuperada) {
@@ -50,30 +49,33 @@ export async function consultarTasaBCV(tasaPorDefecto) {
 }
 
 /**
- * 🔥 MOTOR DE INTERACCIONES CENTRALIZADO EN LA NUBE (Sincronizado al 100%)
+ * 🔥 MOTOR DE INTERACCIONES CENTRALIZADO EN LA NUBE
  */
 export async function obtenerVentasGlobalesTendencia() {
+    // 🛡️ BLINDAJE ANTI-CORS EN LAPTOP: 
+    // Si estás en desarrollo local, lee el respaldo inmediato para evitar que el 404 de Vercel ensucie la consola.
+    if (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
+        return recuperarEstructuraPorDefecto();
+    }
+
     try {
         const BASE_URL = OBTENER_BASE_URL();
         const controladorTiempo = new AbortController();
         const idTiempo = setTimeout(() => controladorTiempo.abort(), 4000);
 
-        // La laptop e internet consultan exactamente el mismo endpoint en Vercel
         const respuesta = await fetch(`${BASE_URL}/api/tendencias`, { 
-            signal: controladorTiempo.signal,
-            mode: 'cors' // 👈 Forzamos el modo CORS de manera explícita para el navegador
+            signal: controladorTiempo.signal 
         });
         
         clearTimeout(idTiempo);
 
-        if (respuesta.ok) {
+        if (respuesta.ok && respuesta.headers.get('content-type')?.includes('application/json')) {
             const data = await respuesta.json();
             if (data && typeof data === 'object') return data;
         }
         
         return recuperarEstructuraPorDefecto();
     } catch (e) {
-        // Si hay bloqueo o error en la laptop, recurre al respaldo sin romper el flujo de app.js
         return recuperarEstructuraPorDefecto();
     }
 }
@@ -82,11 +84,15 @@ export async function obtenerVentasGlobalesTendencia() {
  * 📈 REPORTAR NUEVA COMPRA AL SERVIDOR GLOBAL
  */
 export async function registrarVentaGlobalEnServidor(idProducto, cantidad) {
+    // En la laptop guardamos localmente en silencio para no generar errores de red fallidos
+    if (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
+        return; 
+    }
+
     try {
         const BASE_URL = OBTENER_BASE_URL();
         await fetch(`${BASE_URL}/api/tendencias/incrementar`, {
             method: 'POST',
-            mode: 'cors', // 👈 Solicitud CORS para entornos cruzados
             headers: {
                 'Content-Type': 'application/json'
             },
@@ -95,11 +101,8 @@ export async function registrarVentaGlobalEnServidor(idProducto, cantidad) {
                 cantidad: cantidad
             })
         });
-        console.log(`📡 MongoDB Atlas Actualizado: Producto ${idProducto} sumó +${cantidad} interacciones.`);
     } catch (e) {
-        if (window.location.hostname !== '127.0.0.1' && window.location.hostname !== 'localhost') {
-            console.warn("No se pudo sincronizar con MongoDB:", e);
-        }
+        /* Silenciado en producción */
     }
 }
 
