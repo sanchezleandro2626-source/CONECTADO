@@ -758,3 +758,29 @@ input:focus, select:focus {
     50% { opacity: 1; }
     100% { opacity: 0.5; }
 }
+
+/* ==========================================================================
+   📱 CONFIGURACIÓN DE SCROLL FLUIDO PARA DISPOSITIVOS MÓVILES (URBAN PRO)
+   ========================================================================== */
+
+/* 1. Habilitar desplazamiento vertical en el contenedor de los productos agregados */
+#carritoElementos {
+    max-height: 55vh !important;       /* Limita la altura para que no empuje el botón de pago fuera de la pantalla */
+    overflow-y: auto !important;       /* Fuerza la aparición de la barra de desplazamiento interna */
+    padding-right: 5px;
+    -webkit-overflow-scrolling: touch; /* Desplazamiento ultra-fluido y elástico en iOS y Android */
+}
+
+/* 2. Asegurar que el overlay o fondo permita el desplazamiento del panel interno */
+#carritoOverlay {
+    touch-action: auto !important;     /* Permite interacciones y gestos táctiles dentro del panel */
+}
+
+/* 3. Ajuste estético opcional para la barra de scroll en móviles */
+#carritoElementos::-webkit-scrollbar {
+    width: 4px;
+}
+#carritoElementos::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}

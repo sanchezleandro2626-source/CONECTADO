@@ -6,7 +6,7 @@ import { conmutarPanelesPagoVisual, validarComprobantePago } from '../modulos/pa
 
 // 🆕 INYECCIÓN DEL NUEVO MÓDULO DE APIS DESCENTRALIZADO
 // (Asumiendo que api.js está en la misma carpeta js que app.js)
-import { consultarTasaBCV, enviarMensajeWhatsApp } from './api.js';
+import { consultarTasaBCV, enviarMensajeWhatsApp, obtenerVentasGlobalesTendencia } from './api.js';
 
 const DOM = {
     tasaValor: document.getElementById('tasaValor'),
@@ -68,34 +68,57 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     renderizarCarrito(nodosInterfazCarrito);
 
+   // ==========================================
+    // 🔥 MOTOR DE EVALUACIÓN DE TENDENCIAS GLOBAL CON REORDENAMIENTO FÍSICO Y GARANTÍA 24/7
     // ==========================================
-    // 🔥 MOTOR DE EVALUACIÓN DE PRODUCTO EN TENDENCIA
-    // ==========================================
-    const actualizarMedallasTendencia = () => {
+    const actualizarMedallasTendencia = async () => {
         if (!DOM.productosGrid) return;
 
-        const tarjetasProductos = DOM.productosGrid.querySelectorAll('.producto-item');
-        let maxVentas = 0;
-        let idProductoGanador = null;
+        // 1. Capturar todas las tarjetas de productos actuales en el DOM
+        const tarjetasProductos = Array.from(DOM.productosGrid.querySelectorAll('.producto-item'));
+        
+        // Solicitar los datos unificados del servidor/módulo
+        const ventasGlobales = await obtenerVentasGlobalesTendencia();
 
+        // 2. Mapear y actualizar el texto de interacciones en cada tarjeta antes de ordenar
         tarjetasProductos.forEach(tarjeta => {
             const id = tarjeta.getAttribute('data-id');
-            const ventasActuales = parseInt(localStorage.getItem(`ventas_${id}`)) || 0;
+            const ventasActuales = ventasGlobales && ventasGlobales[id] !== undefined 
+                ? ventasGlobales[id] 
+                : (parseInt(localStorage.getItem(`ventas_${id}`)) || 0);
             
             const smallContador = tarjeta.querySelector('.interacciones-count');
             if (smallContador) smallContador.textContent = `Interacciones: ${ventasActuales}`;
             
-            if (ventasActuales > maxVentas) {
-                maxVentas = ventasActuales;
-                idProductoGanador = id;
-            }
+            // Guardamos temporalmente el número en el elemento para facilitar el ordenamiento
+            tarjeta.setAttribute('data-ventas-temp', ventasActuales);
         });
 
+        // 3. ALGORITMO DE ORDENAMIENTO: Organizar el Array de mayor a menor interacción
+        tarjetasProductos.sort((tarjetaA, tarjetaB) => {
+            const ventasA = parseInt(tarjetaA.getAttribute('data-ventas-temp')) || 0;
+            const ventasB = parseInt(tarjetaB.getAttribute('data-ventas-temp')) || 0;
+            return ventasB - ventasA; // Orden descendente (Mayor a Menor)
+        });
+
+        // 4. DETERMINAR EL GANADOR INDISCUTIBLE PARA CORONARLO 24/7
+        let idProductoGanador = null;
+        if (tarjetasProductos.length > 0) {
+            // Garantía visual: Se elige siempre el primero de la lista ordenada. 
+            // Si todos están en 0, el primero por defecto se lleva la corona para no dejar la interfaz vacía.
+            idProductoGanador = tarjetasProductos[0].getAttribute('data-id');
+        }
+
+        // 5. REINYECCIÓN EN EL DOM Y ASIGNACIÓN DE MEDALLA MVP
         tarjetasProductos.forEach(tarjeta => {
+            // Lo mueve físicamente a su nueva posición en el Grid de la página
+            DOM.productosGrid.appendChild(tarjeta); 
+
             const id = tarjeta.getAttribute('data-id');
             const contenedorBadge = tarjeta.querySelector('.badge-tendencia-container');
             
-            if (id === idProductoGanador && maxVentas > 0) {
+            // Gestionar la medalla cromada MVP solo para el verdadero rey del conteo
+            if (id === idProductoGanador) {
                 if (contenedorBadge && !contenedorBadge.querySelector('.badge-gold-mvp')) {
                     contenedorBadge.innerHTML = `
                         <div class="badge-gold-mvp">
@@ -105,13 +128,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 tarjeta.classList.add('tarjeta-mvp-activa');
             } else {
+                // Limpiar a los que hayan sido destronados por nuevos records de venta
                 if (contenedorBadge) contenedorBadge.innerHTML = "";
                 tarjeta.classList.remove('tarjeta-mvp-activa');
             }
         });
     };
 
-    actualizarMedallasTendencia();
+    // Ejecución inicial al cargar la aplicación
+    await actualizarMedallasTendencia();
 
     // ==========================================
     // 💳 CONTROLADOR REACTIVO DE LA PASARELA DE PAGOS
@@ -131,15 +156,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ==========================================
-    // LÓGICA DE CONTROL DEL PANEL DESPLEGABLE (DRAWER)
+    // LÓGICA DE CONTROL DEL PANEL DESPLEGABLE (DRAWER) - REPARADO PARA SCROLL MÓVIL
     // ==========================================
     const abrirMenuCarrito = () => {
         if (DOM.carritoOverlay) {
             DOM.carritoOverlay.style.opacity = "1";
             DOM.carritoOverlay.style.pointerEvents = "auto";
             DOM.carritoOverlay.firstElementChild.style.transform = "translateX(0)";
+            
+            // 📍 REPARACIÓN: Congela el fondo de la página, pero NO rompe los gestos táctiles del contenedor interno
             document.body.style.overflow = "hidden";
-            document.body.style.touchAction = "none";
         }
     };
 
@@ -148,8 +174,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             DOM.carritoOverlay.style.opacity = "0";
             DOM.carritoOverlay.style.pointerEvents = "none";
             DOM.carritoOverlay.firstElementChild.style.transform = "translateX(100%)";
+            
+            // Devuelve el comportamiento normal a la pantalla
             document.body.style.overflow = "auto";
-            document.body.style.touchAction = "auto";
         }
     };
 
@@ -244,7 +271,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 💳 DETONADOR DE COMPRA - DISPARO E INCREMENTO DE TENDENCIAS
     // ==========================================
     if (DOM.btnProcederPago) {
-        DOM.btnProcederPago.addEventListener('click', () => {
+        DOM.btnProcederPago.addEventListener('click', async () => {
             const itemsEnBolsa = DOM.carritoElementos.querySelectorAll('[data-id]');
             
             if (itemsEnBolsa.length === 0) {
@@ -258,7 +285,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             console.log(`🛒 Procesando orden mediante: ${metodoSeleccionadoActivo}. Incrementando interacciones.`);
 
-            // 🆕 LLAMADA PASIVA AL MÓDULO DE WHATSAPP (Listo para implementar tu lógica de envío)
+            // 🆕 LLAMADA PASIVA AL MÓDULO DE WHATSAPP
             enviarMensajeWhatsApp(itemsEnBolsa);
 
             itemsEnBolsa.forEach(item => {
@@ -270,7 +297,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 localStorage.setItem(`ventas_${id}`, ventasAnteriores + cantidadComprada);
             });
 
-            actualizarMedallasTendencia();
+            // Re-ejecutar el ordenamiento global inmediatamente después de la compra exitosa
+            await actualizarMedallasTendencia();
 
             alert("¡Pedido Procesado Exitosamente! Su pago está siendo verificado y el motorizado en Caracas va en camino. Las interacciones de tendencia han sido actualizadas.");
             cerrarMenuCarrito();
