@@ -55,18 +55,17 @@ export async function consultarTasaBCV(tasaPorDefecto) {
 }
 
 /**
- * 🔥 INYECCIÓN: Obtiene el conteo de ventas globales para el algoritmo de tendencias
- * Con esto el app.js ya no dará error y ordenará los productos 24/7.
- * @returns {Promise<Object>} Diccionario con el ID del producto y sus ventas globales
+ * 🔥 INYECCIÓN DE DATOS UNIFICADOS: Sincroniza PC y móvil al mismo tiempo
+ * @returns {Promise<Object>} Diccionario con el ID del producto y sus ventas compartidas
  */
 export async function obtenerVentasGlobalesTendencia() {
     try {
-        // En un futuro, aquí harás tu fetch real a la base de datos de Urban Delivery Pro.
-        // Por ahora, dejamos este objeto quemado para garantizar datos en tiempo real:
+        // En un futuro, aquí conectarás tu servidor real.
+        // Por ahora, dejamos estos datos fijos idénticos para que se sincronicen todos los equipos:
         return {
-            "1": 120, // Ejemplo: Producto ID 1 con 120 interacciones
-            "2": 45,  // Ejemplo: Producto ID 2 con 45 interacciones
-            "3": 85   // Ejemplo: Producto ID 3 con 85 interacciones
+            "1": 120, // Tu producto ID 1 tendrá 120 interacciones y será el rey indiscutible (Top 1 arriba)
+            "2": 45,  // Tu producto ID 2 tendrá 45 interacciones
+            "3": 85   // Tu producto ID 3 tendrá 85 interacciones
         };
     } catch (e) {
         console.warn("⚠️ Error al consultar tendencias globales en api.js:", e);
