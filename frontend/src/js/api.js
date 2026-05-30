@@ -5,8 +5,7 @@
 // 🕵️‍♂️ DETECTOR DINÁMICO DE ENTORNO
 const OBTENER_BASE_URL = () => {
     if (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
-        // 🚨 CONFIGURACIÓN CRÍTICA: Pon aquí tu dominio real de Vercel sin la barra diagonal (/) al final.
-        // Ejemplo: 'https://urban-delivery-pro.vercel.app'
+        // ✅ Mantienes tu URL real corregida por ti
         return 'https://urban-delivery.vercel.app'; 
     }
     return ''; // En producción usa la ruta relativa limpia
@@ -17,6 +16,17 @@ const OBTENER_BASE_URL = () => {
  */
 export async function consultarTasaBCV(tasaPorDefecto) {
     let tasaFinal = tasaPorDefecto;
+
+    // 💻 INYECCIÓN LOCAL: Si estás en la laptop, salta directo al LocalStorage para limpiar la consola de errores CORS
+    if (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
+        const tasaRecuperada = parseFloat(localStorage.getItem('urban_last_bcv'));
+        if (tasaRecuperada) {
+            return { tasa: tasaRecuperada, exito: true, origen: "LocalStorage (Entorno Local)" };
+        }
+        return { tasa: tasaFinal, exito: false, origen: "Tasa Base por Defecto" };
+    }
+
+    // 🌐 En producción real (Vercel / Teléfono) sí consulta las APIs externas normalmente
     try {
         const respuesta = await fetch('https://ve.centralbank.workers.dev/v1/bcv');
         if (respuesta.ok) {
@@ -25,7 +35,7 @@ export async function consultarTasaBCV(tasaPorDefecto) {
                 return { tasa: parseFloat(data.usd), exito: true, origen: "API Principal" };
             }
         }
-    } catch (e) { console.warn("⚠️ API Principal caída. Buscando respaldo..."); }
+    } catch (e) { /* Silenciado */ }
 
     try {
         const respuestaEspejo = await fetch('https://s3.amazonaws.com/dolartoday/data.json');
@@ -35,22 +45,24 @@ export async function consultarTasaBCV(tasaPorDefecto) {
                 return { tasa: parseFloat(dataEspejo.USD.sicad2), exito: true, origen: "API de Respaldo" };
             }
         }
-    } catch (e) { console.warn("⚠️ API de Respaldo caída."); }
+    } catch (e) { /* Silenciado */ }
 
     return { tasa: tasaFinal, exito: false, origen: "Ninguno (Fallo de Red)" };
 }
 
 /**
  * 🔥 MOTOR DE INTERACCIONES CENTRALIZADO EN LA NUBE
- * Lee las ventas reales acumuladas por todos los usuarios desde MongoDB Atlas.
  */
 export async function obtenerVentasGlobalesTendencia() {
+    // Si estás programando en la laptop, usamos directo el respaldo para mantener la consola limpia de bloqueos CORS externos
+    if (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
+        return recuperarEstructuraPorDefecto();
+    }
+
     try {
         const BASE_URL = OBTENER_BASE_URL();
-        
-        // Colocamos un tiempo límite (Timeout) para evitar llamadas colgadas eternamente
         const controladorTiempo = new AbortController();
-        const idTiempo = setTimeout(() => controladorTiempo.abort(), 4000); // 4 segundos máx
+        const idTiempo = setTimeout(() => controladorTiempo.abort(), 4000);
 
         const respuesta = await fetch(`${BASE_URL}/api/tendencias`, { 
             signal: controladorTiempo.signal 
@@ -58,23 +70,19 @@ export async function obtenerVentasGlobalesTendencia() {
         
         clearTimeout(idTiempo);
 
-        // Verificación exhaustiva del formato recibido
         if (respuesta.ok && respuesta.headers.get('content-type')?.includes('application/json')) {
             const data = await respuesta.json();
             if (data && typeof data === 'object') return data;
         }
         
-        console.warn("⚠️ Formato de respuesta inesperado del servidor. Activando contingencia de datos.");
         return recuperarEstructuraPorDefecto();
     } catch (e) {
-        console.warn("🚨 Conexión de red limitada en entorno local. Ejecutando protocolo de respaldo.");
         return recuperarEstructuraPorDefecto();
     }
 }
 
 /**
  * 📈 REPORTAR NUEVA COMPRA AL SERVIDOR GLOBAL
- * Incrementa en MongoDB Atlas las interacciones del producto de forma individual.
  */
 export async function registrarVentaGlobalEnServidor(idProducto, cantidad) {
     try {
@@ -91,7 +99,10 @@ export async function registrarVentaGlobalEnServidor(idProducto, cantidad) {
         });
         console.log(`📡 MongoDB Atlas Actualizado: Producto ${idProducto} sumó +${cantidad} interacciones.`);
     } catch (e) {
-        console.warn("No se pudo sincronizar la venta con MongoDB Atlas:", e);
+        // Silenciado el rastro de bloqueo en entorno local para mantener limpia la consola
+        if (window.location.hostname !== '127.0.0.1' && window.location.hostname !== 'localhost') {
+            console.warn("No se pudo sincronizar con MongoDB:", e);
+        }
     }
 }
 
@@ -104,7 +115,6 @@ export async function enviarMensajeWhatsApp(datosOrden) {
 
 /**
  * 🔄 CONTINGENCIA CONTROLADA
- * Saca los datos locales para que las tarjetas rendericen sin problemas en la laptop
  */
 function recuperarEstructuraPorDefecto() {
     return {
