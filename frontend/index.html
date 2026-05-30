@@ -8,6 +8,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Hubot+Sans:wght@400;600;700;900&family=Mona+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="src/css/estilos.css">
+    <link rel="stylesheet" href="src/css/tendencia.css">
+    <link rel="stylesheet" href="src/css/pagos.css">
 </head>
 <body>
 
@@ -22,7 +24,6 @@
             </div>
             
             <div class="header-actions" style="display: flex; align-items: center; gap: 12px; margin-left: auto;">
-                
                 <div class="tasa-bcv-badge" id="bcvBadge" style="background: #111; border: 1px solid #222; padding: 6px 12px; border-radius: 20px; display: flex; align-items: center; gap: 6px; font-size: 13px; color: #aaa;">
                     <span class="pulse-indicator" style="width: 6px; height: 6px; background: #00e676; border-radius: 50%; display: inline-block; box-shadow: 0 0 8px #00e676;"></span> 
                     <span class="tasa-texto" style="white-space: nowrap;">BCV: <strong id="tasaValor" style="color: #fff;">Cargando...</strong></span>
@@ -69,9 +70,7 @@
     </div>
 
     <main class="app-container">
-        
         <section class="seccion-catalogo">
-            
             <div class="card buscador-card">
                 <label for="inputBusqueda" class="label-premium">Buscar en la Colección Exclusiva</label>
                 <div class="search-wrapper">
@@ -146,15 +145,15 @@
         
         <div style="width: 100%; max-width: 450px; height: 100%; background: #050505; border-left: 1px solid #111; display: flex; flex-direction: column; padding: 25px; box-sizing: border-box; transform: translateX(100%); transition: transform 0.3s ease;">
             
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid #111; padding-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #111; padding-bottom: 15px;">
                 <h2 style="color: #fff; margin: 0; font-family: 'Mona Sans', sans-serif; font-size: 20px;">Tu Bolsa de Compras <span id="carritoContador" style="font-size: 14px; color: #888;">(0 artículos)</span></h2>
                 <button id="btnCerrarCarrito" style="background: none; border: none; color: #888; font-size: 24px; cursor: pointer; transition: 0.2s;">✕</button>
             </div>
 
-            <div id="carritoElementos" style="flex-grow: 1; overflow-y: auto; margin-bottom: 20px; padding-right: 5px;">
+            <div id="carritoElementos" style="flex-grow: 1; overflow-y: auto; margin-bottom: 15px; padding-right: 5px;">
             </div>
 
-            <div style="background: #111; border: 1px solid #222; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-family: 'Mona Sans', sans-serif;">
+            <div style="background: #111; border: 1px solid #222; padding: 15px; border-radius: 8px; margin-bottom: 15px; font-family: 'Mona Sans', sans-serif;">
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
                     <span style="font-size: 16px;">📍</span>
                     <h4 style="color: #fff; margin: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Dirección de Entrega</h4>
@@ -167,7 +166,54 @@
                 </p>
             </div>
 
-            <div style="border-top: 1px solid #111; padding-top: 20px; font-family: 'Hubot Sans', sans-serif;">
+            <div class="seccion-metodos-pago" style="margin-bottom: 20px;">
+                <h4 style="color: #fff; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 10px 0;">Método de Pago</h4>
+                <div class="grid-selectores-pago">
+                    <div class="opcion-pago-card active" data-metodo="pago_movil">
+                        <span>🇻🇪</span> Pago Móvil
+                    </div>
+                    <div class="opcion-pago-card" data-metodo="zelle">
+                        <span>🇺🇸</span> Zelle
+                    </div>
+                    <div class="opcion-pago-card" data-metodo="efectivo">
+                        <span>💵</span> Efectivo
+                    </div>
+                </div>
+
+                <div id="cajaPagoMovil" class="detalles-pago-alerta init-anim">
+                    <p class="pago-titulo-metodo">📌 Datos para el Pago Móvil:</p>
+                    <div class="datos-bancarios-grid">
+                        <p><strong>Banco:</strong> <span id="pmBanco">Banesco</span></p>
+                        <p><strong>Teléfono:</strong> <span id="pmTelefono">0412-1234567</span></p>
+                        <p><strong>Cédula:</strong> <span id="pmCedula">V-12345678</span></p>
+                    </div>
+                    <div class="grupo-input-pago">
+                        <label for="pagoRefMovil">Últimos 4 dígitos de la referencia:</label>
+                        <input type="text" id="pagoRefMovil" placeholder="Ej: 4829" maxlength="4">
+                    </div>
+                </div>
+
+                <div id="cajaZelle" class="detalles-pago-alerta init-anim hidden">
+                    <p class="pago-titulo-metodo">🇺🇸 Datos de Cuenta Zelle:</p>
+                    <div class="datos-bancarios-grid">
+                        <p><strong>Correo:</strong> <span id="zelleCorreo">pagos.urban@gmail.com</span></p>
+                        <p><strong>Titular:</strong> <span id="zelleTitular">Urban Store Inversiones LTD</span></p>
+                    </div>
+                    <div class="grupo-input-pago">
+                        <label for="pagoRefZelle">Nombre del titular de la cuenta emisora:</label>
+                        <input type="text" id="pagoRefZelle" placeholder="Ej: Carlos Mendoza">
+                    </div>
+                </div>
+
+                <div id="cajaEfectivo" class="detalles-pago-alerta alerta-info init-anim hidden">
+                    <p class="pago-titulo-metodo">💵 Efectivo contra Entrega:</p>
+                    <p class="texto-instrucciones" id="efectivoTexto">
+                        Prepara el monto exacto en dólares ($) en efectivo. El motorizado verificará los billetes con luz UV al momento de la entrega en Caracas.
+                    </p>
+                </div>
+            </div>
+
+            <div style="border-top: 1px solid #111; padding-top: 15px; font-family: 'Hubot Sans', sans-serif;">
                 <div style="display: flex; justify-content: space-between; color: #888; margin-bottom: 8px; font-size: 14px;">
                     <span>Subtotal Productos:</span>
                     <span id="resumenSubtotal">$0.00</span>
@@ -181,7 +227,7 @@
                     <span style="color: #fff; font-size: 16px; font-weight: bold;">Monto Total:</span>
                     <span id="resumenTotal" style="color: #fff; font-size: 22px; font-weight: bold;">$0.00</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <span style="color: #666; font-size: 12px;">Monto de Cambio Oficial:</span>
                     <span id="resumenTotalBs" style="color: #00e676; font-size: 16px; font-weight: bold;">0.00 Bs</span>
                 </div>

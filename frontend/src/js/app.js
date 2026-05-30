@@ -1,6 +1,12 @@
 import { agregarAlCarrito, eliminarDelCarrito, renderizarCarrito, setTasaBolivares, TASA_BOLIVARES } from '../modulos/carrito.js';
-// 📍 INYECCIÓN CORREGIDA: Al estar en la misma carpeta js, se importa usando "./"
+// 📍 Importación de geolocalización
 import { obtenerUbicacionCliente } from './mapa.js';
+// 💳 Importación de controladores de pago
+import { conmutarPanelesPagoVisual, validarComprobantePago } from '../modulos/pagos.js';
+
+// 🆕 INYECCIÓN DEL NUEVO MÓDULO DE APIS DESCENTRALIZADO
+// (Asumiendo que api.js está en la misma carpeta js que app.js)
+import { consultarTasaBCV, enviarMensajeWhatsApp } from './api.js';
 
 const DOM = {
     tasaValor: document.getElementById('tasaValor'),
@@ -11,23 +17,18 @@ const DOM = {
     resumenTotal: document.getElementById('resumenTotal'),
     resumenTotalBs: document.getElementById('resumenTotalBs'),
     
-    // NUEVOS ELEMENTOS DE LA INTERFAZ EXTENDIDA
     btnAbrirCarrito: document.getElementById('btnAbrirCarrito'),
     btnCerrarCarrito: document.getElementById('btnCerrarCarrito'),
     carritoOverlay: document.getElementById('carritoOverlay'),
-    
-    // 📍 INYECCIÓN PASIVA: Elemento para capturar la localización desde el carrito
     btnUbicacion: document.getElementById('btnFijarUbicacion'),
-
-    // 🔍 INYECCIÓN DEL BUSCADOR: Mapeo del input en el objeto DOM
-    inputBusqueda: document.getElementById('inputBusqueda')
+    inputBusqueda: document.getElementById('inputBusqueda'),
+    btnProcederPago: document.getElementById('btnProcederPago'),
+    tarjetasMetodosPago: document.querySelectorAll('.opcion-pago-card')
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. CARGAR TASA DE EMERGENCIA HISTÓRICA (Última que funcionó en el dispositivo)
+    // 1. RECUPERAR TASA HISTÓRICA INICIAL PARA EVITAR RETRASOS VISUALES
     let tasaFinal = parseFloat(localStorage.getItem('urban_last_bcv')) || TASA_BOLIVARES;
-    
-    // Inicializar la interfaz de inmediato con la tasa recuperada para evitar retrasos visuales
     setTasaBolivares(tasaFinal);
     if (DOM.tasaValor) DOM.tasaValor.textContent = `${tasaFinal.toFixed(2)} Bs/$`;
 
@@ -40,77 +41,103 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     // ==========================================
-    // 🚀 SISTEMA DE TRIPLE BLINDAJE ANTI-PÉRDIDAS (BCV)
+    // 🚀 CONTROL DE TASA MEDIANTE MÓDULO API DE TRIPLE BLINDAJE
     // ==========================================
-    let tasaCargadaExitosamente = false;
+    
+    // Llamamos al módulo externo pasándole la tasa base por si no hay conexión
+    const resultadoBCV = await consultarTasaBCV(TASA_BOLIVARES);
 
-    // --- INTENTO 1: API Principal ---
-    try {
-        const respuesta = await fetch('https://ve.centralbank.workers.dev/v1/bcv');
-        if (respuesta.ok) {
-            const data = await respuesta.json();
-            if (data && data.usd) {
-                tasaFinal = parseFloat(data.usd);
-                tasaCargadaExitosamente = true;
-                console.log("✅ API Principal exitosa.");
-            }
-        }
-    } catch (e) {
-        console.warn("⚠️ API Principal caída. Activando protocolo de contingencia...");
-    }
-
-    // --- INTENTO 2: API de Respaldo (Si el Intento 1 falló) ---
-    if (!tasaCargadaExitosamente) {
-        try {
-            // Usamos una API alternativa de respaldo (DolarToday/BCV espejo)
-            const respuestaEspejo = await fetch('https://s3.amazonaws.com/dolartoday/data.json');
-            if (respuestaEspejo.ok) {
-                const dataEspejo = await respuestaEspejo.json();
-                if (dataEspejo && dataEspejo.USD && dataEspejo.USD.sicad2) {
-                    tasaFinal = parseFloat(dataEspejo.USD.sicad2); // El campo alterno del BCV
-                    tasaCargadaExitosamente = true;
-                    console.log("✅ API de Respaldo exitosa.");
-                }
-            }
-        } catch (e) {
-            console.warn("⚠️ API de Respaldo también caída. Activando memoria local profunda...");
-        }
-    }
-
-    // --- VALIDACIÓN Y SALVAGUARDA DE DATOS ---
-    if (tasaCargadaExitosamente) {
-        // Guardamos la tasa fresca en LocalStorage para el futuro
+    if (resultadoBCV.exito) {
+        tasaFinal = resultadoBCV.tasa;
         localStorage.setItem('urban_last_bcv', tasaFinal);
+        console.log(`✅ Tasa cargada desde ${resultadoBCV.origen}: ${tasaFinal.toFixed(2)}`);
     } else {
-        // Si TODO internet se cayó a nivel global o nacional:
-        // Tomamos la última tasa que guardó el teléfono/PC y le metemos un 2% de protección por inflación
+        // Mantenemos intacto tu protocolo de emergencia local si internet se cae por completo
         const tasaRecuperada = parseFloat(localStorage.getItem('urban_last_bcv'));
         if (tasaRecuperada) {
-            tasaFinal = tasaRecuperada * 1.02; // 2% de colchón de seguridad automática para la empresa
+            tasaFinal = tasaRecuperada * 1.02; // Colchón del 2% de protección empresarial
             console.error(`🚨 APOCALIPSIS DE RED: Sin internet. Tasa recuperada con +2% de protección: ${tasaFinal.toFixed(2)}`);
         } else {
-            // Si es la primera vez en la vida que abre la app y no hay red, usa el código base
             tasaFinal = TASA_BOLIVARES;
         }
     }
 
-    // 2. APLICAR TASA DEFINITIVA AL SISTEMA
+    // Aplicar la tasa definitiva obtenida de forma limpia
     setTasaBolivares(tasaFinal);
     if (DOM.tasaValor) DOM.tasaValor.textContent = `${tasaFinal.toFixed(2)} Bs/$`;
     
-    // Inicializar estado del carrito y recalcular
     renderizarCarrito(nodosInterfazCarrito);
 
     // ==========================================
-    // LÓGICA DE CONTROL DEL PANEL DESPLEGABLE (DRAWER) - CONGELACIÓN ANTI-SCROLL
+    // 🔥 MOTOR DE EVALUACIÓN DE PRODUCTO EN TENDENCIA
+    // ==========================================
+    const actualizarMedallasTendencia = () => {
+        if (!DOM.productosGrid) return;
+
+        const tarjetasProductos = DOM.productosGrid.querySelectorAll('.producto-item');
+        let maxVentas = 0;
+        let idProductoGanador = null;
+
+        tarjetasProductos.forEach(tarjeta => {
+            const id = tarjeta.getAttribute('data-id');
+            const ventasActuales = parseInt(localStorage.getItem(`ventas_${id}`)) || 0;
+            
+            const smallContador = tarjeta.querySelector('.interacciones-count');
+            if (smallContador) smallContador.textContent = `Interacciones: ${ventasActuales}`;
+            
+            if (ventasActuales > maxVentas) {
+                maxVentas = ventasActuales;
+                idProductoGanador = id;
+            }
+        });
+
+        tarjetasProductos.forEach(tarjeta => {
+            const id = tarjeta.getAttribute('data-id');
+            const contenedorBadge = tarjeta.querySelector('.badge-tendencia-container');
+            
+            if (id === idProductoGanador && maxVentas > 0) {
+                if (contenedorBadge && !contenedorBadge.querySelector('.badge-gold-mvp')) {
+                    contenedorBadge.innerHTML = `
+                        <div class="badge-gold-mvp">
+                            <span>⚡</span> Top Tendencia
+                        </div>
+                    `;
+                }
+                tarjeta.classList.add('tarjeta-mvp-activa');
+            } else {
+                if (contenedorBadge) contenedorBadge.innerHTML = "";
+                tarjeta.classList.remove('tarjeta-mvp-activa');
+            }
+        });
+    };
+
+    actualizarMedallasTendencia();
+
+    // ==========================================
+    // 💳 CONTROLADOR REACTIVO DE LA PASARELA DE PAGOS
+    // ==========================================
+    let metodoSeleccionadoActivo = 'pago_movil';
+
+    if (DOM.tarjetasMetodosPago) {
+        DOM.tarjetasMetodosPago.forEach(tarjeta => {
+            tarjeta.addEventListener('click', (e) => {
+                const clickTarget = e.currentTarget;
+                DOM.tarjetasMetodosPago.forEach(t => t.classList.remove('active'));
+                clickTarget.classList.add('active');
+                metodoSeleccionadoActivo = clickTarget.getAttribute('data-metodo');
+                conmutarPanelesPagoVisual(metodoSeleccionadoActivo);
+            });
+        });
+    }
+
+    // ==========================================
+    // LÓGICA DE CONTROL DEL PANEL DESPLEGABLE (DRAWER)
     // ==========================================
     const abrirMenuCarrito = () => {
         if (DOM.carritoOverlay) {
             DOM.carritoOverlay.style.opacity = "1";
             DOM.carritoOverlay.style.pointerEvents = "auto";
             DOM.carritoOverlay.firstElementChild.style.transform = "translateX(0)";
-            
-            // 🛑 CONGELAR FONDO: Evita que la tienda se deslice atrás al mover el carrito en móviles
             document.body.style.overflow = "hidden";
             document.body.style.touchAction = "none";
         }
@@ -121,8 +148,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             DOM.carritoOverlay.style.opacity = "0";
             DOM.carritoOverlay.style.pointerEvents = "none";
             DOM.carritoOverlay.firstElementChild.style.transform = "translateX(100%)";
-            
-            // 🔓 LIBERAR FONDO: Devuelve el scroll normal a la tienda al cerrar la bolsa
             document.body.style.overflow = "auto";
             document.body.style.touchAction = "auto";
         }
@@ -167,7 +192,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ==========================================
-    // 📍 CONFIGURACIÓN ESCUCHA DEL BOTÓN GEOLOCALIZACIÓN RECONECTADO
+    // 📍 BOTÓN GEOLOCALIZACIÓN RECONECTADO
     // ==========================================
     if (DOM.btnUbicacion) {
         DOM.btnUbicacion.addEventListener('click', () => {
@@ -177,7 +202,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ==========================================
-    // 🔍 MOTOR DE BÚSQUEDA PREDICTIVA Y FILTRADO EN TIEMPO REAL
+    // 🔍 MOTOR DE BÚSQUEDA PREDICTIVA Y FILTRADO
     // ==========================================
     if (DOM.inputBusqueda && DOM.productosGrid) {
         DOM.inputBusqueda.addEventListener('input', (e) => {
@@ -194,7 +219,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             });
             
-            // Notificación visual si el catálogo queda vacío al buscar
             const productosVisibles = DOM.productosGrid.querySelectorAll('.producto-item:not(.hidden)');
             let mensajeVacio = document.getElementById('búsquedaVacíaMensaje');
             
@@ -213,6 +237,43 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else {
                 if (mensajeVacio) mensajeVacio.remove();
             }
+        });
+    }
+
+    // ==========================================
+    // 💳 DETONADOR DE COMPRA - DISPARO E INCREMENTO DE TENDENCIAS
+    // ==========================================
+    if (DOM.btnProcederPago) {
+        DOM.btnProcederPago.addEventListener('click', () => {
+            const itemsEnBolsa = DOM.carritoElementos.querySelectorAll('[data-id]');
+            
+            if (itemsEnBolsa.length === 0) {
+                alert("Tu bolsa de compras está vacía. Agrega productos para procesar la orden.");
+                return;
+            }
+
+            if (!validarComprobantePago(metodoSeleccionadoActivo)) {
+                return; 
+            }
+
+            console.log(`🛒 Procesando orden mediante: ${metodoSeleccionadoActivo}. Incrementando interacciones.`);
+
+            // 🆕 LLAMADA PASIVA AL MÓDULO DE WHATSAPP (Listo para implementar tu lógica de envío)
+            enviarMensajeWhatsApp(itemsEnBolsa);
+
+            itemsEnBolsa.forEach(item => {
+                const id = item.getAttribute('data-id');
+                const inputCantidad = item.querySelector('.carrito-item-cantidad') || item.querySelector('input');
+                const cantidadComprada = inputCantidad ? parseInt(inputCantidad.value) || 1 : 1;
+
+                const ventasAnteriores = parseInt(localStorage.getItem(`ventas_${id}`)) || 0;
+                localStorage.setItem(`ventas_${id}`, ventasAnteriores + cantidadComprada);
+            });
+
+            actualizarMedallasTendencia();
+
+            alert("¡Pedido Procesado Exitosamente! Su pago está siendo verificado y el motorizado en Caracas va en camino. Las interacciones de tendencia han sido actualizadas.");
+            cerrarMenuCarrito();
         });
     }
     
