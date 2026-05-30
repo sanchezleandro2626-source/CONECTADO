@@ -3,11 +3,10 @@
    ========================================================================== */
 
 // 🕵️‍♂️ DETECTOR DINÁMICO DE ENTORNO
-// Si estás en localhost/Live Server, apunta a tu dominio real de producción en Vercel. 
-// Si ya está en producción, usa la ruta relativa normal.
 const OBTENER_BASE_URL = () => {
     if (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
-        // 🔥 REEMPLAZA ESTA URL por el enlace real de tu proyecto en Vercel (ej: 'https://tu-proyecto.vercel.app')
+        // 🔥 IMPORTANTE: Asegúrate de colocar aquí la URL real de tu proyecto en Vercel
+        // Ejemplo: 'https://urban-delivery-pro.vercel.app'
         return 'https://urban-delivery-pro.vercel.app'; 
     }
     return ''; // En producción usa la ruta relativa limpia
@@ -48,20 +47,19 @@ export async function consultarTasaBCV(tasaPorDefecto) {
 export async function obtenerVentasGlobalesTendencia() {
     try {
         const BASE_URL = OBTENER_BASE_URL();
-        // 📡 Consulta el backend de Vercel de forma inteligente según el entorno
         const respuesta = await fetch(`${BASE_URL}/api/tendencias`);
         
-        if (respuesta.ok) {
+        // 🛡️ CONTROL DE FLUJO SEGURO: Verificamos si la respuesta realmente contiene un JSON válido
+        if (respuesta.ok && respuesta.headers.get('content-type')?.includes('application/json')) {
             const data = await respuesta.json();
-            // Retorna el objeto formateado desde tu base de datos { "1": X, "2": Y, "3": Z }
             return data; 
         }
         
-        console.warn("⚠️ El servidor de MongoDB Atlas retornó un estado no exitoso. Usando fallback.");
-        return null;
+        console.warn("⚠️ Servidor local sin acceso a rutas API. Activando contingencia de datos.");
+        return recuperarEstructuraPorDefecto();
     } catch (e) {
-        console.error("🚨 Error crítico en conexión de base de datos global (MongoDB):", e);
-        return null;
+        console.error("🚨 Error en conexión de base de datos global (MongoDB):", e);
+        return recuperarEstructuraPorDefecto();
     }
 }
 
@@ -72,7 +70,6 @@ export async function obtenerVentasGlobalesTendencia() {
 export async function registrarVentaGlobalEnServidor(idProducto, cantidad) {
     try {
         const BASE_URL = OBTENER_BASE_URL();
-        // 📡 Hace un POST a tu endpoint para ejecutar un 'updateOne' o '$inc' en Atlas
         await fetch(`${BASE_URL}/api/tendencias/incrementar`, {
             method: 'POST',
             headers: {
@@ -95,4 +92,16 @@ export async function registrarVentaGlobalEnServidor(idProducto, cantidad) {
  */
 export async function enviarMensajeWhatsApp(datosOrden) {
     console.log("⚡ Orden enviada a control de despacho de Urban Delivery Pro:", datosOrden);
+}
+
+/**
+ * 🔄 CONTINGENCIA CONTROLADA
+ * Entrega un objeto limpio estructurado para evitar que explote app.js en desarrollo local
+ */
+function recuperarEstructuraPorDefecto() {
+    return {
+        "1": parseInt(localStorage.getItem('ventas_1')) || 0,
+        "2": parseInt(localStorage.getItem('ventas_2')) || 0,
+        "3": parseInt(localStorage.getItem('ventas_3')) || 0
+    };
 }
