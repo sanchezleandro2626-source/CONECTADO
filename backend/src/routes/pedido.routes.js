@@ -19,4 +19,8 @@ router.get('/todos', pedidoController.obtenerPedidos);
 // PATCH -> /api/pedidos/estatus/:id
 router.patch('/estatus/:id', pedidoController.actualizarEstatus);
 
+// 4. INYECCIÓN PARA MOTOR DE TENDENCIAS GLOBAL (Se mantiene el orden y estructura original)
+// GET -> /api/pedidos/tendencias
+router.get('/tendencias', pedidoController.obtenerTendencias);
+
 module.exports = router;

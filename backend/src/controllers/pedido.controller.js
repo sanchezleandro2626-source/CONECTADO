@@ -127,6 +127,30 @@ const pedidoController = {
                 error: error.message
             });
         }
+    },
+
+    // 4. CALCULAR TENDENCIAS EN TIEMPO REAL (Agregado estadístico)
+    obtenerTendencias: async (req, res) => {
+        try {
+            const tendencias = await Pedido.aggregate([
+                { $unwind: "$productos" }, // Desglosa cada producto de cada pedido
+                { $group: { 
+                    _id: "$productos.id", 
+                    totalVentas: { $sum: 1 } 
+                }},
+                { $sort: { totalVentas: -1 } } // Ordena de más vendido a menos
+            ]);
+
+            // Convertimos el array de resultados en un objeto fácil de leer: { "id_zapatos": 22 }
+            const mapaTendencias = {};
+            tendencias.forEach(item => {
+                mapaTendencias[item._id] = item.totalVentas;
+            });
+
+            return res.status(200).json(mapaTendencias);
+        } catch (error) {
+            return res.status(500).json({ status: "error", message: "Error al calcular tendencias" });
+        }
     }
 };
 

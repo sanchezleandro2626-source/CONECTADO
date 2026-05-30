@@ -52,18 +52,13 @@ export async function consultarTasaBCV(tasaPorDefecto) {
  * 🔥 MOTOR DE INTERACCIONES CENTRALIZADO EN LA NUBE
  */
 export async function obtenerVentasGlobalesTendencia() {
-    // 🛡️ BLINDAJE ANTI-CORS EN LAPTOP: 
-    // Si estás en desarrollo local, lee el respaldo inmediato para evitar que el 404 de Vercel ensucie la consola.
-    if (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
-        return recuperarEstructuraPorDefecto();
-    }
-
     try {
         const BASE_URL = OBTENER_BASE_URL();
         const controladorTiempo = new AbortController();
         const idTiempo = setTimeout(() => controladorTiempo.abort(), 4000);
 
-        const respuesta = await fetch(`${BASE_URL}/api/tendencias`, { 
+        // AHORA APUNTA A LA RUTA CORRECTA: /api/pedidos/tendencias
+        const respuesta = await fetch(`${BASE_URL}/api/pedidos/tendencias`, { 
             signal: controladorTiempo.signal 
         });
         
@@ -84,7 +79,7 @@ export async function obtenerVentasGlobalesTendencia() {
  * 📈 REPORTAR NUEVA COMPRA AL SERVIDOR GLOBAL
  */
 export async function registrarVentaGlobalEnServidor(idProducto, cantidad) {
-    // En la laptop guardamos localmente en silencio para no generar errores de red fallidos
+    // Nota: Esta función es para el futuro registro, por ahora mantiene la lógica original
     if (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
         return; 
     }
